@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>MedCycle — Pharmacy Portal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    * { font-family: 'Plus Jakarta Sans', sans-serif; box-sizing: border-box; }
+
+    :root {
+      --green:   #059669;
+      --green2:  #10B981;
+      --blue:    #2563EB;
+      --purple:  #7C3AED;
+      --dark:    #0A0F1E;
+      --danger:  #EF4444;
+      --warning: #F59E0B;
+    }
+
+    body { background: #F0F4FF; min-height: 100vh; overflow-x: hidden; }
+
+    .mesh-bg {
+      position: fixed; inset: 0; z-index: 0;
+      background: linear-gradient(135deg, #d1fae5 0%, #e0f2fe 50%, #ede9fe 100%);
+      background-size: 400% 400%;
+      animation: meshShift 14s ease-in-out infinite;
+    }
+    @keyframes meshShift { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
+
+    /* ── Glass system ── */
+    .glass-card {
+      backdrop-filter: blur(20px);
+      background: rgba(255,255,255,0.88);
+      border-radius: 20px;
+      box-shadow: 0 8px 32px rgba(5,150,105,0.09);
+      border: 1px solid rgba(255,255,255,0.65);
+    }
+    .glass-header {
+      backdrop-filter: blur(24px);
+      background: rgba(255,255,255,0.92);
+      border-bottom: 1px solid rgba(5,150,105,0.10);
+    }
+
+    /* ── Gradient utilities ── */
+    .grad-green { background: linear-gradient(135deg, #059669 0%, #0EA5E9 100%); }
+    .grad-main  { background: linear-gradient(135deg, #2563EB 0%, #7C3AED 100%); }
+
+    /* ── Inputs ── */
+    .inp {
+      width: 100%; border: 1.5px solid #e2e8f0; border-radius: 12px;
+      padding: 12px 14px; font-size: 14px; background: white;
+      transition: all .2s; color: #1e293b;
+    }
+    .inp:focus { outline: none; border-color: #059669; box-shadow: 0 0 0 3px rgba(5,150,105,0.12); }
+    .inp-label { font-size: 11px; font-weight: 700; color: #64748b; margin-bottom: 5px; display: block; letter-spacing: .04em; text-transform: uppercase; }
+
+    /* ── Buttons ── */
+    .btn-primary {
+      width: 100%; border-radius: 14px; padding: 14px; font-weight: 700;
+      font-size: 14px; color: white; border: none; cursor: pointer;
+      background: linear-gradient(135deg, #059669 0%, #0EA5E9 100%);
+      transition: all .25s; box-shadow: 0 4px 16px rgba(5,150,105,0.30);
+      position: relative; overflow: hidden;
+    }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(5,150,105,0.40); }
+    .btn-primary:active { transform: translateY(0); }
+    .btn-primary .shimmer {
+      position: absolute; top: 0; left: -100%; width: 60%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+      animation: shimmerSlide 2.5s infinite;
+    }
+    @keyframes shimmerSlide { 0% { left: -100%; } 100% { left: 200%; } }
+
+    .btn-outline {
+      width: 100%; border-radius: 14px; padding: 12px; font-weight: 600;
+      font-size: 14px; cursor: pointer; transition: all .2s;
+      background: rgba(5,150,105,0.06); border: 1.5px solid rgba(5,150,105,0.2); color: #059669;
+    }
+    .btn-outline:hover { background: rgba(5,150,105,0.12); }
+
+    /* ── Bottom nav ── */
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
+      backdrop-filter: blur(24px);
+      background: rgba(255,255,255,0.93);
+      border-top: 1px solid rgba(5,150,105,0.10);
+      box-shadow: 0 -4px 24px rgba(5,150,105,0.08);
+    }
+    .nav-btn { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 4px 10px; flex: 1; cursor: pointer; border: none; background: none; transition: all .2s; }
+    .nav-btn .nav-icon { font-size: 20px; transition: transform .2s; }
+    .nav-btn .nav-label { font-size: 10px; font-weight: 600; color: #94a3b8; transition: all .2s; }
+    .nav-btn.active .nav-label { background: linear-gradient(135deg, #059669, #0EA5E9); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .nav-btn.active .nav-icon { transform: scale(1.15); }
+    .nav-btn.active .nav-underline { width: 24px; height: 3px; border-radius: 2px; background: linear-gradient(90deg, #059669, #0EA5E9); margin-top: 2px; }
+    .nav-btn .nav-underline { width: 0; height: 3px; border-radius: 2px; background: transparent; margin-top: 2px; transition: width .2s; }
+
+    /* ── Animations ── */
+    .slide-up { animation: slideUp .35s cubic-bezier(.22,.68,0,1.2); }
+    @keyframes slideUp { from { transform: translateY(24px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .slide-in { animation: slideIn .3s cubic-bezier(.22,.68,0,1.2); }
+    @keyframes slideIn { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .pulse-ring { animation: pulseRing 2s infinite; }
+    @keyframes pulseRing { 0%,100%{box-shadow:0 0 0 0 rgba(5,150,105,0.5)} 50%{box-shadow:0 0 0 14px rgba(5,150,105,0)} }
+    .float { animation: float 4s ease-in-out infinite; }
+    @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
+
+    /* ── Scanner ── */
+    .scanner-frame {
+      border-radius: 20px; overflow: hidden; position: relative;
+      background: linear-gradient(135deg, #f0fdf4, #ecfdf5);
+      border: 2px dashed rgba(5,150,105,0.3);
+    }
+    .scanner-corner {
+      position: absolute; width: 20px; height: 20px;
+      border-color: #059669; border-style: solid; border-width: 0;
+    }
+    .scanner-corner.tl { top:12px; left:12px; border-top-width:3px; border-left-width:3px; border-radius:4px 0 0 0; }
+    .scanner-corner.tr { top:12px; right:12px; border-top-width:3px; border-right-width:3px; border-radius:0 4px 0 0; }
+    .scanner-corner.bl { bottom:12px; left:12px; border-bottom-width:3px; border-left-width:3px; border-radius:0 0 0 4px; }
+    .scanner-corner.br { bottom:12px; right:12px; border-bottom-width:3px; border-right-width:3px; border-radius:0 0 4px 0; }
+    .scan-beam {
+      position: absolute; left: 12px; right: 12px; height: 2px;
+      background: linear-gradient(90deg, transparent, #059669, #0EA5E9, #059669, transparent);
+      border-radius: 2px; box-shadow: 0 0 8px rgba(5,150,105,0.6);
+      animation: scanBeam 2.4s ease-in-out infinite;
+    }
+    @keyframes scanBeam { 0%,100%{top:16px;opacity:0.6} 50%{top:calc(100% - 20px);opacity:1} }
+
+    /* ── Result cards ── */
+    .result-success {
+      border-radius: 20px; overflow: hidden;
+      background: linear-gradient(135deg, #f0fdf4, #ecfdf5);
+      border: 1.5px solid rgba(16,185,129,0.3);
+      box-shadow: 0 8px 32px rgba(5,150,105,0.12);
+    }
+    .result-error {
+      border-radius: 20px; overflow: hidden;
+      background: linear-gradient(135deg, #fef2f2, #fff5f5);
+      border: 1.5px solid rgba(239,68,68,0.25);
+      box-shadow: 0 8px 32px rgba(239,68,68,0.10);
+    }
+
+    /* ── Timeline ── */
+    .timeline-item::before {
+      content: '';
+      position: absolute; left: 16px; top: 40px; bottom: -8px;
+      width: 2px; background: linear-gradient(180deg, rgba(5,150,105,0.3), transparent);
+    }
+    .timeline-item:last-child::before { display: none; }
+
+    /* ── Risk bars ── */
+    .risk-bar { height: 8px; border-radius: 6px; transition: width .8s cubic-bezier(.4,0,.2,1); }
+
+    /* ── KPI card ── */
+    .kpi-card {
+      border-radius: 20px; padding: 20px;
+      backdrop-filter: blur(20px);
+      background: rgba(255,255,255,0.88);
+      border: 1px solid rgba(255,255,255,0.65);
+      box-shadow: 0 8px 32px rgba(5,150,105,0.09);
+      transition: transform .2s;
+    }
+    .kpi-card:hover { transform: translateY(-2px); }
+
+    /* ── Language switcher ── */
+    .lang-btn { padding: 3px 8px; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer; border: 1.5px solid #e2e8f0; background: white; color: #64748b; transition: all .2s; }
+    .lang-btn.lang-active { background: linear-gradient(135deg,#059669,#0EA5E9); color: white; border-color: transparent; box-shadow: 0 2px 8px rgba(5,150,105,0.3); }
+    .lang-switcher { display: flex; gap: 4px; align-items: center; }
+  </style>
+</head>
+<body>
+<div class="mesh-bg"></div>
+
+<!-- ══ HEADER ══════════════════════════════════════════════════════════ -->
+<header class="glass-header sticky top-0 z-40 shadow-sm">
+  <div class="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl grad-green flex items-center justify-center shadow-md">
+        <span class="text-white font-extrabold text-lg leading-none">M</span>
+      </div>
+      <div>
+        <div class="font-extrabold text-base leading-none" style="color:#0A0F1E" data-i18n="app_name">MedCycle</div>
+        <div class="text-xs text-slate-400 font-medium mt-0.5" data-i18n="ph_portal">Pharmacy Portal</div>
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <div class="lang-switcher">
+        <button class="lang-btn lang-active" data-lang="en" onclick="setLanguage('en')">EN</button>
+        <button class="lang-btn" data-lang="hi" onclick="setLanguage('hi')">हि</button>
+        <button class="lang-btn" data-lang="mr" onclick="setLanguage('mr')">म</button>
+        <button class="lang-btn" data-lang="ta" onclick="setLanguage('ta')">த</button>
+      </div>
+    </div>
+    <div id="pharmacy-name-badge" class="flex items-center gap-2 px-3 py-2 rounded-full"
+         style="background:linear-gradient(135deg,rgba(5,150,105,0.10),rgba(5,150,105,0.05));border:1.5px solid rgba(5,150,105,0.2)">
+      <span class="text-base">🏪</span>
+      <div class="text-right">
+        <div class="font-bold text-xs leading-none" style="color:#065F46" id="pharmacy-name-header">—</div>
+        <div class="text-xs font-medium mt-0.5" style="color:#6EE7B7" id="pharmacy-location-header">Not logged in</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ══ CONTENT ══════════════════════════════════════════════════════════ -->
+<div class="max-w-lg mx-auto px-4 pt-4 relative z-10">
+
+  <!-- ══ LOGIN SCREEN ══════════════════════════════════════════════════ -->
+  <div id="login-screen" class="min-h-screen flex items-center justify-center py-8">
+    <div class="glass-card p-8 w-full space-y-6 float">
+      <!-- Logo -->
+      <div class="text-center">
+        <div class="w-20 h-20 grad-green rounded-[28px] flex items-center justify-center mx-auto mb-4 shadow-xl" style="box-shadow:0 12px 40px rgba(5,150,105,0.35)">
+          <span class="text-4xl">🏪</span>
+        </div>
+        <h1 class="font-extrabold text-2xl" style="color:#0A0F1E" data-i18n="ph_portal">Pharmacy Portal</h1>
+        <p class="text-sm text-slate-500 mt-1" data-i18n="ph_subtitle">Secure access for verified MedCycle partners</p>
+      </div>
+
+      <!-- Form -->
+      <div class="space-y-4">
+        <div>
+          <label class="inp-label" data-i18n="ph_id_lbl">Pharmacy ID</label>
+          <input id="pharmacy-id-input" type="number" placeholder="Enter your pharmacy ID (e.g. 1)"
+            data-i18n-placeholder="ph_id_ph"
+            class="inp" onkeydown="if(event.key==='Enter') loginPharmacy()" />
+        </div>
+        <button onclick="loginPharmacy()" class="btn-primary">
+          <span class="shimmer"></span>
+          <span data-i18n="ph_login_btn">🔐 Login to Portal →</span>
+        </button>
+        <div class="flex items-center gap-3">
+          <div class="flex-1 h-px" style="background:#e2e8f0"></div>
+          <span class="text-xs text-slate-400 font-medium">or</span>
+          <div class="flex-1 h-px" style="background:#e2e8f0"></div>
+        </div>
+        <button onclick="demoLogin()" class="btn-outline" data-i18n="ph_demo_btn">
+          🎮 Demo Mode — no server needed
+        </button>
+      </div>
+
+      <!-- Trust badges -->
+      <div class="grid grid-cols-3 gap-2 pt-2">
+        <div class="text-center p-2 rounded-[12px]" style="background:rgba(5,150,105,0.05)">
+          <div class="text-lg">🔒</div>
+          <div class="text-xs font-semibold text-slate-500 mt-1" data-i18n="ph_secure">Secure</div>
+        </div>
+        <div class="text-center p-2 rounded-[12px]" style="background:rgba(37,99,235,0.05)">
+          <div class="text-lg">📊</div>
+          <div class="text-xs font-semibold text-slate-500 mt-1" data-i18n="ph_tracked">Tracked</div>
+        </div>
+        <div class="text-center p-2 rounded-[12px]" style="background:rgba(124,58,237,0.05)">
+          <div class="text-lg">🌿</div>
+          <div class="text-xs font-semibold text-slate-500 mt-1" data-i18n="ph_verified">Verified</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PORTAL SCREEN (hidden until login) ══════════════════════════ -->
+  <div id="portal-screen" class="hidden pb-28 space-y-4">
+
+    <!-- ── SCAN TAB ─────────────────────────────────────────────────── -->
+    <div id="tab-content-scan" class="space-y-4 slide-up">
+
+      <!-- Scanner Visual -->
+      <div class="glass-card p-5">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h2 class="font-extrabold text-base" style="color:#0A0F1E" data-i18n="ph_scan_title">Scan Citizen QR Code</h2>
+            <p class="text-xs text-slate-400 mt-0.5" data-i18n="ph_scan_sub">Citizen shows QR from their MedCycle app</p>
+          </div>
+          <div class="w-9 h-9 rounded-xl flex items-center justify-center" style="background:rgba(5,150,105,0.10)">
+            <span class="text-xl">📷</span>
+          </div>
+        </div>
+        <div class="scanner-frame h-44 flex items-center justify-center cursor-pointer" onclick="activateManualEntry()">
+          <div class="scan-beam"></div>
+          <div class="scanner-corner tl"></div>
+          <div class="scanner-corner tr"></div>
+          <div class="scanner-corner bl"></div>
+          <div class="scanner-corner br"></div>
+          <div class="text-center z-10 relative">
+            <div class="text-4xl mb-2 opacity-40">📷</div>
+            <div class="text-sm font-semibold text-slate-500">Camera scan coming soon</div>
+            <div class="text-xs text-slate-400 mt-1">Use manual entry below ↓</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Manual QR Entry -->
+      <div class="glass-card p-5 space-y-3" id="qr-input-card">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="font-bold text-sm" style="color:#0A0F1E" data-i18n="ph_manual_title">Enter Disposal ID</h3>
+            <p class="text-xs text-slate-400 mt-0.5" data-i18n="ph_manual_sub">Paste or type the UUID from citizen's QR</p>
+          </div>
+          <span class="text-xs px-2 py-1 rounded-full font-semibold" style="background:rgba(5,150,105,0.10);color:#059669">Manual</span>
+        </div>
+        <div class="flex gap-2">
+          <input id="qr-input" type="text" placeholder="550e8400-e29b-41d4-a716..."
+            data-i18n-placeholder="ph_manual_qr_ph"
+            class="inp flex-1" style="font-family:monospace;font-size:13px"
+            onkeydown="if(event.key==='Enter') verifyDisposal()" />
+          <button onclick="verifyDisposal()"
+            class="px-5 py-3 rounded-[14px] text-sm font-bold text-white flex-shrink-0 transition-all hover:scale-[1.03] hover:shadow-lg"
+            style="background:linear-gradient(135deg,#059669,#0EA5E9);box-shadow:0 4px 14px rgba(5,150,105,0.30)" data-i18n="ph_verify_btn">
+            Verify
+          </button>
+        </div>
+        <p class="text-xs text-slate-400">Press <kbd class="px-1.5 py-0.5 rounded text-xs" style="background:#f1f5f9;border:1px solid #e2e8f0">Enter</kbd> to verify quickly</p>
+      </div>
+
+      <!-- Verification Result -->
+      <div id="verify-result" class="hidden"></div>
+    </div>
+
+    <!-- ── MANUAL ENTRY TAB ─────────────────────────────────────────── -->
+    <div id="tab-content-manual" class="hidden space-y-4 slide-up">
+      <div class="glass-card p-5 space-y-4">
+        <div>
+          <h2 class="font-extrabold text-base" style="color:#0A0F1E" data-i18n="ph_manual_title">Manual Disposal Log</h2>
+          <p class="text-xs text-slate-400 mt-0.5" data-i18n="ph_manual_sub">For citizens without the app — log directly here</p>
+        </div>
+
+        <div class="p-3 rounded-[14px] text-xs" style="background:rgba(245,158,11,0.07);border:1.5px solid rgba(245,158,11,0.2);color:#92400E">
+          ⚠️ Manual entries are logged but citizens cannot receive app reward points without a QR code. Encourage them to download MedCycle.
+        </div>
+
+        <div>
+          <label class="inp-label" data-i18n="ph_manual_med_lbl">Medicine Name *</label>
+          <input id="manual-med-name" type="text" placeholder="e.g. Amoxicillin 500mg" data-i18n-placeholder="ph_manual_med_ph" class="inp" />
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="inp-label" data-i18n="ph_manual_class_lbl">Antibiotic Class</label>
+            <select id="manual-class" class="inp" style="appearance:none">
+              <option value="">Select type</option>
+              <option value="penicillin">Penicillin</option>
+              <option value="fluoroquinolone">Fluoroquinolone ⚠️</option>
+              <option value="macrolide">Macrolide</option>
+              <option value="cephalosporin">Cephalosporin</option>
+              <option value="tetracycline">Tetracycline</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div>
+            <label class="inp-label" data-i18n="ph_manual_qty_lbl">Quantity</label>
+            <input id="manual-qty" type="number" value="1" min="1" class="inp" />
+          </div>
+        </div>
+
+        <div>
+          <label class="inp-label" data-i18n="ph_manual_phone_lbl">Citizen Phone (optional)</label>
+          <input id="manual-phone" type="tel" placeholder="+91 XXXXX XXXXX" data-i18n-placeholder="ph_manual_phone_ph" class="inp" />
+        </div>
+
+        <button onclick="submitManualEntry()" class="btn-primary">
+          <span class="shimmer"></span>
+          📋 Log Disposal
+        </button>
+        <div id="manual-result" class="hidden"></div>
+      </div>
+    </div>
+
+    <!-- ── TODAY'S LOG TAB ──────────────────────────────────────────── -->
+    <div id="tab-content-today" class="hidden space-y-4 slide-up">
+      <div class="glass-card p-5">
+        <div class="flex items-center justify-between mb-5">
+          <div>
+            <h2 class="font-extrabold text-base" style="color:#0A0F1E" data-i18n="ph_today_title">Today's Disposal Log</h2>
+            <p class="text-xs text-slate-400 mt-0.5" id="today-date"></p>
+          </div>
+          <div class="text-center px-4 py-2 rounded-[14px]" style="background:linear-gradient(135deg,rgba(5,150,105,0.12),rgba(16,185,129,0.06))">
+            <div class="text-3xl font-extrabold leading-none" style="background:linear-gradient(135deg,#059669,#10B981);-webkit-background-clip:text;-webkit-text-fill-color:transparent" id="today-count">0</div>
+            <div class="text-xs text-slate-400 font-medium mt-0.5" data-i18n="ph_today_verified">verified</div>
+          </div>
+        </div>
+        <div id="today-log" class="space-y-3">
+          <div class="flex flex-col items-center justify-center py-10 text-slate-400">
+            <div class="w-14 h-14 rounded-2xl flex items-center justify-center mb-3 text-3xl" style="background:rgba(5,150,105,0.08)">📋</div>
+            <div class="font-semibold text-sm">No entries yet today</div>
+            <div class="text-xs mt-1">Verify a QR code to see it here</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── STATS TAB ────────────────────────────────────────────────── -->
+    <div id="tab-content-stats" class="hidden space-y-4 slide-up">
+
+      <!-- KPI Grid -->
+      <div class="grid grid-cols-2 gap-3">
+        <div class="kpi-card">
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center mb-3 text-xl"
+               style="background:linear-gradient(135deg,rgba(5,150,105,0.15),rgba(16,185,129,0.08))">✅</div>
+          <div class="text-3xl font-extrabold leading-none" style="background:linear-gradient(135deg,#059669,#10B981);-webkit-background-clip:text;-webkit-text-fill-color:transparent" id="stat-total-verified">—</div>
+          <div class="text-xs text-slate-400 mt-1 font-medium" data-i18n="ph_stat_total">Total Verified</div>
+        </div>
+        <div class="kpi-card">
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center mb-3 text-xl"
+               style="background:linear-gradient(135deg,rgba(37,99,235,0.15),rgba(14,165,233,0.08))">📅</div>
+          <div class="text-3xl font-extrabold leading-none" style="background:linear-gradient(135deg,#2563EB,#0EA5E9);-webkit-background-clip:text;-webkit-text-fill-color:transparent" id="stat-today">—</div>
+          <div class="text-xs text-slate-400 mt-1 font-medium" data-i18n="ph_stat_today">Today</div>
+        </div>
+        <div class="kpi-card col-span-2">
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center mb-3 text-xl"
+               style="background:linear-gradient(135deg,rgba(124,58,237,0.15),rgba(139,92,246,0.08))">🏆</div>
+          <div class="text-3xl font-extrabold leading-none" style="background:linear-gradient(135deg,#7C3AED,#A855F7);-webkit-background-clip:text;-webkit-text-fill-color:transparent" id="stat-rank">#4</div>
+          <div class="text-xs text-slate-400 mt-1 font-medium" data-i18n="ph_stat_rank">National Rank</div>
+        </div>
+      </div>
+
+      <!-- Top Medicines -->
+      <div class="glass-card p-5">
+        <div class="font-extrabold text-sm mb-4" style="color:#0A0F1E" data-i18n="ph_top_medicines">Top Medicines Received</div>
+        <div class="space-y-3" id="top-medicines-list">
+          <div class="flex items-center gap-3 py-2 border-b border-slate-100">
+            <div class="w-8 h-8 rounded-[10px] flex items-center justify-center text-sm flex-shrink-0" style="background:rgba(5,150,105,0.10)">💊</div>
+            <div class="flex-1 text-sm font-semibold text-slate-700">Amoxicillin 500mg</div>
+            <div class="text-xs font-bold px-2 py-0.5 rounded-full" style="background:rgba(5,150,105,0.10);color:#059669">34 units</div>
+          </div>
+          <div class="flex items-center gap-3 py-2 border-b border-slate-100">
+            <div class="w-8 h-8 rounded-[10px] flex items-center justify-center text-sm flex-shrink-0" style="background:rgba(239,68,68,0.10)">⚠️</div>
+            <div class="flex-1 text-sm font-semibold text-slate-700">Ciprofloxacin 500mg</div>
+            <div class="text-xs font-bold px-2 py-0.5 rounded-full" style="background:rgba(239,68,68,0.10);color:#DC2626">28 units</div>
+          </div>
+          <div class="flex items-center gap-3 py-2 border-b border-slate-100">
+            <div class="w-8 h-8 rounded-[10px] flex items-center justify-center text-sm flex-shrink-0" style="background:rgba(5,150,105,0.10)">💊</div>
+            <div class="flex-1 text-sm font-semibold text-slate-700">Azithromycin 250mg</div>
+            <div class="text-xs font-bold px-2 py-0.5 rounded-full" style="background:rgba(5,150,105,0.10);color:#059669">21 units</div>
+          </div>
+          <div class="flex items-center gap-3 py-2">
+            <div class="w-8 h-8 rounded-[10px] flex items-center justify-center text-sm flex-shrink-0" style="background:rgba(5,150,105,0.10)">💊</div>
+            <div class="flex-1 text-sm font-semibold text-slate-700">Doxycycline 100mg</div>
+            <div class="text-xs font-bold px-2 py-0.5 rounded-full" style="background:rgba(5,150,105,0.10);color:#059669">15 units</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AMR Risk Summary -->
+      <div class="glass-card p-5">
+        <div class="font-extrabold text-sm mb-4" style="color:#0A0F1E" data-i18n="ph_amr_risk">AMR Risk Breakdown</div>
+        <div class="space-y-4">
+          <div>
+            <div class="flex justify-between items-center mb-1.5">
+              <div class="flex items-center gap-2">
+                <div class="w-2.5 h-2.5 rounded-full" style="background:#DC2626"></div>
+                <span class="text-xs font-semibold" style="color:#DC2626" data-i18n="ph_risk_critical">Critical Risk</span>
+              </div>
+              <span class="text-xs font-bold" style="color:#DC2626">28 items</span>
+            </div>
+            <div class="h-2 rounded-full" style="background:rgba(220,38,38,0.10)">
+              <div class="risk-bar" style="width:28%;background:linear-gradient(90deg,#DC2626,#EF4444)"></div>
+            </div>
+          </div>
+          <div>
+            <div class="flex justify-between items-center mb-1.5">
+              <div class="flex items-center gap-2">
+                <div class="w-2.5 h-2.5 rounded-full" style="background:#EA580C"></div>
+                <span class="text-xs font-semibold" style="color:#EA580C" data-i18n="ph_risk_high">High Risk</span>
+              </div>
+              <span class="text-xs font-bold" style="color:#EA580C">56 items</span>
+            </div>
+            <div class="h-2 rounded-full" style="background:rgba(234,88,12,0.10)">
+              <div class="risk-bar" style="width:56%;background:linear-gradient(90deg,#EA580C,#F97316)"></div>
+            </div>
+          </div>
+          <div>
+            <div class="flex justify-between items-center mb-1.5">
+              <div class="flex items-center gap-2">
+                <div class="w-2.5 h-2.5 rounded-full" style="background:#CA8A04"></div>
+                <span class="text-xs font-semibold" style="color:#CA8A04" data-i18n="ph_risk_medium">Medium Risk</span>
+              </div>
+              <span class="text-xs font-bold" style="color:#CA8A04">89 items</span>
+            </div>
+            <div class="h-2 rounded-full" style="background:rgba(202,138,4,0.10)">
+              <div class="risk-bar" style="width:89%;background:linear-gradient(90deg,#CA8A04,#EAB308)"></div>
+            </div>
+          </div>
+          <div>
+            <div class="flex justify-between items-center mb-1.5">
+              <div class="flex items-center gap-2">
+                <div class="w-2.5 h-2.5 rounded-full" style="background:#16A34A"></div>
+                <span class="text-xs font-semibold" style="color:#16A34A" data-i18n="ph_risk_low">Low Risk</span>
+              </div>
+              <span class="text-xs font-bold" style="color:#16A34A">45 items</span>
+            </div>
+            <div class="h-2 rounded-full" style="background:rgba(22,163,74,0.10)">
+              <div class="risk-bar" style="width:45%;background:linear-gradient(90deg,#16A34A,#22C55E)"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /tab-content-stats -->
+
+    <!-- ── RX TRACK TAB ──────────────────────────────────────────────── -->
+    <div id="tab-content-rxtrack" class="hidden space-y-4 slide-up">
+
+      <!-- Add Prescription Form -->
+      <div class="glass-card p-5 space-y-4">
+        <div>
+          <h2 class="font-extrabold text-base" style="color:#0A0F1E">💊 Prescribe &amp; Track</h2>
+          <p class="text-xs text-slate-400 mt-0.5">Log a new prescription and monitor course completion</p>
+        </div>
+        <div>
+          <label class="inp-label">Customer Name *</label>
+          <input id="rx-customer" type="text" placeholder="e.g. Ramesh Kumar" class="inp" />
+        </div>
+        <div>
+          <label class="inp-label">Prescribed Drug *</label>
+          <input id="rx-drug" type="text" placeholder="e.g. Amoxicillin 500mg" class="inp" />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="inp-label">Dosage Details</label>
+            <input id="rx-dosage" type="text" placeholder="e.g. 1 tablet 3×/day" class="inp" />
+          </div>
+          <div>
+            <label class="inp-label">Duration (days)</label>
+            <input id="rx-duration" type="number" placeholder="7" min="1" max="90" class="inp" />
+          </div>
+        </div>
+        <div>
+          <label class="inp-label">Start Date</label>
+          <input id="rx-start" type="date" class="inp" />
+        </div>
+        <button onclick="addPrescription()" class="btn-primary">
+          <span class="shimmer"></span>
+          📋 Add Prescription
+        </button>
+        <div id="rx-add-result" class="hidden"></div>
+      </div>
+
+      <!-- Active Medications -->
+      <div class="glass-card p-5">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="font-extrabold text-sm" style="color:#0A0F1E">🟢 Active Medications</h3>
+            <p class="text-xs text-slate-400 mt-0.5">Currently in-course</p>
+          </div>
+          <span id="rx-active-count" class="text-xs font-bold px-2 py-1 rounded-full" style="background:rgba(5,150,105,0.12);color:#059669">0</span>
+        </div>
+        <div id="rx-active-list">
+          <div class="text-center py-6 text-slate-400 text-xs">No active prescriptions</div>
+        </div>
+      </div>
+
+      <!-- Return Due This Week -->
+      <div class="glass-card p-5">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="font-extrabold text-sm" style="color:#0A0F1E">📅 Return Due This Week</h3>
+            <p class="text-xs text-slate-400 mt-0.5">Courses ending within 7 days — remind customers to return</p>
+          </div>
+          <span id="rx-due-count" class="text-xs font-bold px-2 py-1 rounded-full" style="background:rgba(245,158,11,0.12);color:#B45309">0</span>
+        </div>
+        <div id="rx-due-list">
+          <div class="text-center py-6 text-slate-400 text-xs">No returns due this week</div>
+        </div>
+      </div>
+
+      <!-- Completed Courses -->
+      <div class="glass-card p-5">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="font-extrabold text-sm" style="color:#0A0F1E">✅ Completed Courses</h3>
+            <p class="text-xs text-slate-400 mt-0.5">Customers who finished their antibiotic course</p>
+          </div>
+          <span id="rx-done-count" class="text-xs font-bold px-2 py-1 rounded-full" style="background:rgba(37,99,235,0.12);color:#2563EB">0</span>
+        </div>
+        <div id="rx-done-list">
+          <div class="text-center py-6 text-slate-400 text-xs">No completed courses yet</div>
+        </div>
+      </div>
+
+    </div><!-- /tab-content-rxtrack -->
+
+  </div><!-- /portal-screen -->
+</div><!-- /content -->
+
+<!-- ══ BOTTOM NAV (only shown after login) ══════════════════════════ -->
+<nav class="bottom-nav hidden" id="bottom-nav">
+  <div class="max-w-lg mx-auto flex" style="padding:0 8px">
+    <button onclick="showTab('scan')" id="tab-scan" class="nav-btn active">
+      <span class="nav-icon">📷</span>
+      <span class="nav-label" data-i18n="ph_scan_title">Scan QR</span>
+      <span class="nav-underline"></span>
+    </button>
+    <button onclick="showTab('manual')" id="tab-manual" class="nav-btn">
+      <span class="nav-icon">✍️</span>
+      <span class="nav-label" data-i18n="ph_manual_title">Manual</span>
+      <span class="nav-underline"></span>
+    </button>
+    <button onclick="showTab('today')" id="tab-today" class="nav-btn">
+      <span class="nav-icon">📋</span>
+      <span class="nav-label" data-i18n="ph_today_title">Today</span>
+      <span class="nav-underline"></span>
+    </button>
+    <button onclick="showTab('stats')" id="tab-stats" class="nav-btn">
+      <span class="nav-icon">📊</span>
+      <span class="nav-label" data-i18n="ph_stats_title">Stats</span>
+      <span class="nav-underline"></span>
+    </button>
+    <button onclick="showTab('rxtrack')" id="tab-rxtrack" class="nav-btn">
+      <span class="nav-icon">💊</span>
+      <span class="nav-label">Rx Track</span>
+      <span class="nav-underline"></span>
+    </button>
+  </div>
+</nav>
+
+<script>
+const API_BASE = 'http://localhost:8000/api/v1';
+let pharmacyData = null;
+let todayLog = [];
+
+// ── LOGIN ─────────────────────────────────────────────────────────────
+async function loginPharmacy() {
+  const id = document.getElementById('pharmacy-id-input').value.trim();
+  if (!id) { alert('Enter pharmacy ID'); return; }
+  try {
+    const r = await fetch(`${API_BASE}/pharmacies/`);
+    if (r.ok) {
+      const pharmacies = await r.json();
+      pharmacyData = pharmacies.find(p => p.id == id);
+      if (!pharmacyData) { alert('Pharmacy not found.'); return; }
+      activatePortal();
+      return;
+    }
+  } catch (e) {}
+  demoLogin();
+}
+
+function demoLogin() {
+  pharmacyData = {
+    id: 1,
+    name: 'Apollo Pharmacy',
+    city: 'New Delhi',
+    state: 'Delhi',
+    total_verified: 247,
+  };
+  activatePortal();
+}
+
+function activatePortal() {
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('portal-screen').classList.remove('hidden');
+  document.getElementById('bottom-nav').classList.remove('hidden');
+  document.getElementById('pharmacy-name-header').textContent = pharmacyData.name;
+  document.getElementById('pharmacy-location-header').textContent = `${pharmacyData.city}, ${pharmacyData.state}`;
+  document.getElementById('stat-total-verified').textContent = pharmacyData.total_verified;
+  document.getElementById('stat-today').textContent = '0';
+  document.getElementById('stat-rank').textContent = '#4';
+  document.getElementById('today-date').textContent = new Date().toLocaleDateString('en-IN', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+  // Set default start date to today for Rx Track form
+  document.getElementById('rx-start').value = new Date().toISOString().split('T')[0];
+  renderRxLists();
+}
+
+// ── TAB NAVIGATION ────────────────────────────────────────────────────
+function showTab(name) {
+  ['scan','manual','today','stats','rxtrack'].forEach(t => {
+    document.getElementById(`tab-content-${t}`).classList.add('hidden');
+    document.getElementById(`tab-${t}`).classList.remove('active');
+  });
+  document.getElementById(`tab-content-${name}`).classList.remove('hidden');
+  document.getElementById(`tab-${name}`).classList.add('active');
+  if (name === 'rxtrack') renderRxLists();
+}
+
+// ── QR VERIFICATION ───────────────────────────────────────────────────
+async function verifyDisposal() {
+  const disposalId = document.getElementById('qr-input').value.trim();
+  if (!disposalId) { showError('Please enter a Disposal ID.'); return; }
+
+  try {
+    const r = await fetch(`${API_BASE}/disposal/verify/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ disposal_id: disposalId, pharmacy_id: pharmacyData?.id || 1 })
+    });
+    const data = await r.json();
+    if (r.ok) {
+      showVerifySuccess(data, disposalId);
+      return;
+    } else {
+      showError(data.non_field_errors?.[0] || data.error || 'Verification failed.');
+      return;
+    }
+  } catch (e) {}
+
+  // Demo fallback
+  if (disposalId.length >= 8) {
+    showVerifySuccess({
+      disposal_id: disposalId,
+      status: 'verified',
+      pharmacy: pharmacyData?.name || 'Apollo Pharmacy',
+      points_earned: 15,
+      total_points: 45,
+    }, disposalId);
+  } else {
+    showError('Invalid QR code. Please try again.');
+  }
+}
+
+function showVerifySuccess(data, disposalId) {
+  const result = document.getElementById('verify-result');
+  result.classList.remove('hidden');
+  result.innerHTML = `
+    <div class="result-success p-5 slide-in">
+      <div class="flex items-center gap-4 mb-5">
+        <div class="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl flex-shrink-0 pulse-ring"
+             style="background:linear-gradient(135deg,#059669,#10B981);box-shadow:0 8px 24px rgba(5,150,105,0.35)">✅</div>
+        <div>
+          <div class="font-extrabold text-xl" style="color:#065F46">Disposal Verified!</div>
+          <div class="text-sm font-medium mt-0.5" style="color:#059669">Citizen will receive reward points</div>
+        </div>
+      </div>
+      <div class="space-y-2.5 p-4 rounded-[14px] mb-4" style="background:rgba(5,150,105,0.06)">
+        <div class="flex justify-between items-center">
+          <span class="text-sm text-slate-500 font-medium">Disposal ID</span>
+          <span class="font-mono text-xs font-bold" style="color:#065F46">${String(data.disposal_id || disposalId).slice(0,14)}…</span>
+        </div>
+        <div class="h-px" style="background:rgba(5,150,105,0.15)"></div>
+        <div class="flex justify-between items-center">
+          <span class="text-sm text-slate-500 font-medium">Points Awarded</span>
+          <span class="font-extrabold text-lg" style="color:#059669">+${data.points_earned || 15} pts</span>
+        </div>
+        <div class="h-px" style="background:rgba(5,150,105,0.15)"></div>
+        <div class="flex justify-between items-center">
+          <span class="text-sm text-slate-500 font-medium">Citizen Total</span>
+          <span class="font-bold text-sm" style="color:#065F46">${data.total_points || '—'} pts</span>
+        </div>
+      </div>
+      <button onclick="clearVerify()" class="btn-primary">
+        <span class="shimmer"></span>
+        Scan Next QR →
+      </button>
+    </div>
+  `;
+  document.getElementById('qr-input').value = '';
+  logTodayEntry(disposalId, data);
+  document.getElementById('stat-today').textContent = parseInt(document.getElementById('stat-today').textContent || 0) + 1;
+}
+
+function showError(msg) {
+  const result = document.getElementById('verify-result');
+  result.classList.remove('hidden');
+  result.innerHTML = `
+    <div class="result-error p-5 slide-in">
+      <div class="flex items-center gap-4 mb-4">
+        <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0"
+             style="background:linear-gradient(135deg,rgba(239,68,68,0.15),rgba(239,68,68,0.08))">❌</div>
+        <div>
+          <div class="font-extrabold text-lg" style="color:#991B1B">Verification Failed</div>
+          <div class="text-sm font-medium mt-0.5" style="color:#EF4444">${msg}</div>
+        </div>
+      </div>
+      <button onclick="clearVerify()" class="w-full py-3 rounded-[14px] font-bold text-sm transition-all"
+        style="background:rgba(239,68,68,0.10);border:1.5px solid rgba(239,68,68,0.2);color:#DC2626">
+        ↩ Try Again
+      </button>
+    </div>
+  `;
+}
+
+function clearVerify() {
+  document.getElementById('verify-result').classList.add('hidden');
+  document.getElementById('verify-result').innerHTML = '';
+  document.getElementById('qr-input').value = '';
+  document.getElementById('qr-input').focus();
+}
+
+function activateManualEntry() {
+  document.getElementById('qr-input').focus();
+}
+
+// ── TODAY'S LOG ───────────────────────────────────────────────────────
+function logTodayEntry(disposalId, data) {
+  const entry = {
+    id: disposalId,
+    time: new Date().toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' }),
+    points: data.points_earned || 15,
+  };
+  todayLog.unshift(entry);
+  renderTodayLog();
+  document.getElementById('today-count').textContent = todayLog.length;
+}
+
+function renderTodayLog() {
+  const el = document.getElementById('today-log');
+  if (!todayLog.length) {
+    el.innerHTML = `
+      <div class="flex flex-col items-center justify-center py-10 text-slate-400">
+        <div class="w-14 h-14 rounded-2xl flex items-center justify-center mb-3 text-3xl" style="background:rgba(5,150,105,0.08)">📋</div>
+        <div class="font-semibold text-sm">No entries yet today</div>
+        <div class="text-xs mt-1">Verify a QR code to see it here</div>
+      </div>`;
+    return;
+  }
+  el.innerHTML = todayLog.map((e, i) => `
+    <div class="relative timeline-item flex items-start gap-3 pb-3">
+      <div class="w-9 h-9 rounded-xl flex items-center justify-center text-base flex-shrink-0 z-10"
+           style="background:linear-gradient(135deg,rgba(5,150,105,0.15),rgba(16,185,129,0.08))">✅</div>
+      <div class="flex-1 p-3 rounded-[14px]" style="background:rgba(5,150,105,0.05);border:1px solid rgba(5,150,105,0.12)">
+        <div class="flex justify-between items-center">
+          <span class="font-mono text-xs font-semibold text-slate-600">${String(e.id).slice(0,18)}…</span>
+          <span class="font-bold text-xs px-2 py-0.5 rounded-full" style="background:rgba(5,150,105,0.12);color:#059669">+${e.points} pts</span>
+        </div>
+        <div class="text-xs text-slate-400 mt-1">⏱ ${e.time}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── MANUAL ENTRY ──────────────────────────────────────────────────────
+async function submitManualEntry() {
+  const name = document.getElementById('manual-med-name').value.trim();
+  if (!name) { alert('Enter medicine name.'); return; }
+  const result = document.getElementById('manual-result');
+  result.classList.remove('hidden');
+  result.innerHTML = `
+    <div class="p-4 rounded-[14px] slide-in" style="background:rgba(5,150,105,0.07);border:1.5px solid rgba(5,150,105,0.2)">
+      <div class="font-bold text-sm" style="color:#065F46">✅ Logged: ${name}</div>
+      <div class="text-xs mt-1" style="color:#059669">Ask the citizen to download MedCycle to earn future reward points.</div>
+    </div>
+  `;
+  document.getElementById('manual-med-name').value = '';
+  document.getElementById('manual-class').value = '';
+  document.getElementById('manual-qty').value = '1';
+  document.getElementById('manual-phone').value = '';
+  setTimeout(() => result.classList.add('hidden'), 4000);
+}
+
+// ── RX TRACK ───────────────────────────────────────────────────────────
+let prescriptions = JSON.parse(localStorage.getItem('medcycle_rx') || '[]');
+
+function addPrescription() {
+  const customer = document.getElementById('rx-customer').value.trim();
+  const drug = document.getElementById('rx-drug').value.trim();
+  const dosage = document.getElementById('rx-dosage').value.trim();
+  const days = parseInt(document.getElementById('rx-duration').value) || 7;
+  const startVal = document.getElementById('rx-start').value;
+  if (!customer || !drug) { alert('Customer name and drug are required.'); return; }
+  const startDate = startVal ? new Date(startVal) : new Date();
+  const endDate = new Date(startDate);
+  endDate.setDate(endDate.getDate() + days - 1);
+  const rx = {
+    id: Date.now(),
+    customer,
+    drug,
+    dosage: dosage || `${days}-day course`,
+    days,
+    startDate: startDate.toISOString().split('T')[0],
+    endDate: endDate.toISOString().split('T')[0],
+  };
+  prescriptions.unshift(rx);
+  localStorage.setItem('medcycle_rx', JSON.stringify(prescriptions));
+  ['rx-customer','rx-drug','rx-dosage','rx-duration','rx-start'].forEach(id => { document.getElementById(id).value = ''; });
+  const result = document.getElementById('rx-add-result');
+  result.classList.remove('hidden');
+  result.innerHTML = `<div class="p-3 rounded-[12px] text-xs slide-in" style="background:rgba(5,150,105,0.08);border:1.5px solid rgba(5,150,105,0.2);color:#065F46">✅ Prescription added for <strong>${customer}</strong> — ends ${rx.endDate}</div>`;
+  setTimeout(() => result.classList.add('hidden'), 4000);
+  renderRxLists();
+}
+
+function getRxCategory(rx) {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const end = new Date(rx.endDate); end.setHours(0,0,0,0);
+  const diff = Math.ceil((end - today) / (1000 * 60 * 60 * 24));
+  if (diff < 0) return 'completed';
+  if (diff <= 7) return 'due';
+  return 'active';
+}
+
+function renderRxLists() {
+  const active = [], due = [], done = [];
+  prescriptions.forEach(rx => {
+    const cat = getRxCategory(rx);
+    if (cat === 'completed') done.push(rx);
+    else if (cat === 'due') due.push(rx);
+    else active.push(rx);
+  });
+  document.getElementById('rx-active-count').textContent = active.length;
+  document.getElementById('rx-due-count').textContent = due.length;
+  document.getElementById('rx-done-count').textContent = done.length;
+  renderRxGroup('rx-active-list', active, 'active');
+  renderRxGroup('rx-due-list', due, 'due');
+  renderRxGroup('rx-done-list', done, 'completed');
+}
+
+function renderRxGroup(elId, items, type) {
+  const el = document.getElementById(elId);
+  if (!items.length) {
+    const msgs = { active:'No active prescriptions', due:'No returns due this week', completed:'No completed courses yet' };
+    el.innerHTML = `<div class="text-center py-6 text-slate-400 text-xs">${msgs[type]}</div>`;
+    return;
+  }
+  const colors = { active:'#059669', due:'#B45309', completed:'#2563EB' };
+  const bgs    = { active:'rgba(5,150,105,0.06)', due:'rgba(245,158,11,0.06)', completed:'rgba(37,99,235,0.06)' };
+  el.innerHTML = items.map(rx => {
+    const today = new Date(); today.setHours(0,0,0,0);
+    const end   = new Date(rx.endDate); end.setHours(0,0,0,0);
+    const daysLeft = Math.ceil((end - today) / (1000*60*60*24));
+    const badge = type === 'completed'
+      ? `Ended ${rx.endDate}`
+      : type === 'due'
+        ? `⚠️ ${daysLeft} day${daysLeft !== 1 ? 's' : ''} left`
+        : `Ends ${rx.endDate}`;
+    return `
+      <div class="p-3 rounded-[14px] mb-2 last:mb-0" style="background:${bgs[type]};border:1.5px solid ${colors[type]}33">
+        <div class="flex justify-between items-start gap-2">
+          <div class="flex-1 min-w-0">
+            <div class="font-bold text-sm truncate" style="color:#0A0F1E">${rx.customer}</div>
+            <div class="text-xs font-semibold mt-0.5" style="color:${colors[type]}">${rx.drug}</div>
+            <div class="text-xs text-slate-400 mt-0.5">${rx.dosage}</div>
+          </div>
+          <div class="text-right flex-shrink-0">
+            <div class="text-xs font-bold" style="color:${colors[type]}">${badge}</div>
+            <div class="text-xs text-slate-400 mt-0.5">Started ${rx.startDate}</div>
+          </div>
+        </div>
+        ${type !== 'completed' ? `<button onclick="markRxComplete(${rx.id})" class="mt-2 w-full text-xs py-1.5 rounded-[10px] font-semibold transition-all" style="background:rgba(5,150,105,0.08);border:1px solid rgba(5,150,105,0.2);color:#059669">✅ Mark Completed</button>` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+function markRxComplete(id) {
+  const today = new Date().toISOString().split('T')[0];
+  prescriptions = prescriptions.map(rx => rx.id === id ? { ...rx, endDate: today } : rx);
+  localStorage.setItem('medcycle_rx', JSON.stringify(prescriptions));
+  renderRxLists();
+}
+</script>
+<script src="/static/js/i18n.js"></script>
+</body>
+</html>

@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MedCycle — Government Analytics Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    * { font-family: 'Plus Jakarta Sans', sans-serif; box-sizing: border-box; }
+
+    :root {
+      --primary: #2563EB;
+      --secondary: #7C3AED;
+      --accent: #0EA5E9;
+      --success: #10B981;
+      --warning: #F59E0B;
+      --danger: #EF4444;
+      --dark: #0A0F1E;
+      --sidebar-w: 224px;
+    }
+
+    body { background: #F0F4FF; margin: 0; }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: var(--sidebar-w);
+      background: linear-gradient(180deg, #0A0F1E 0%, #111827 100%);
+      position: fixed; top: 0; left: 0; height: 100%; z-index: 40;
+      display: flex; flex-direction: column;
+      border-right: 1px solid rgba(255,255,255,0.05);
+    }
+    .sidebar-logo { padding: 20px 16px 16px; border-bottom: 1px solid rgba(255,255,255,0.07); }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px; width: 100%;
+      padding: 10px 14px; border-radius: 12px; font-size: 13px; font-weight: 600;
+      color: rgba(255,255,255,0.55); border: none; background: none;
+      cursor: pointer; transition: all .2s; text-align: left; position: relative;
+      margin-bottom: 2px;
+    }
+    .nav-item:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.85); }
+    .nav-item.active {
+      background: rgba(37,99,235,0.18);
+      color: #93c5fd;
+    }
+    .nav-item.active::before {
+      content: ''; position: absolute; left: 0; top: 4px; bottom: 4px;
+      width: 3px; border-radius: 0 3px 3px 0;
+      background: linear-gradient(135deg, #2563EB, #7C3AED);
+    }
+    .nav-icon { font-size: 16px; width: 20px; text-align: center; }
+
+    /* ── Main ── */
+    .main { margin-left: var(--sidebar-w); min-height: 100vh; }
+
+    /* ── Top bar ── */
+    .topbar {
+      background: white;
+      border-bottom: 1px solid rgba(37,99,235,0.07);
+      box-shadow: 0 2px 16px rgba(37,99,235,0.06);
+      padding: 14px 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 30;
+    }
+
+    /* ── Metric cards ── */
+    .metric-card {
+      background: white; border-radius: 20px;
+      box-shadow: 0 4px 24px rgba(37,99,235,0.08);
+      transition: transform .25s, box-shadow .25s;
+      border: 1px solid rgba(37,99,235,0.05);
+      overflow: hidden;
+    }
+    .metric-card:hover { transform: translateY(-3px); box-shadow: 0 12px 36px rgba(37,99,235,0.13); }
+
+    /* ── Charts ── */
+    canvas { max-height: 220px !important; }
+    #heatmap-map { height: 480px; z-index: 1; border-radius: 16px; }
+    .leaflet-popup-content { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 12px; line-height: 1.6; min-width: 140px; }
+    .leaflet-popup-content-wrapper { border-radius: 14px !important; box-shadow: 0 8px 32px rgba(37,99,235,0.15) !important; }
+
+    /* ── Risk styles ── */
+    .risk-critical { background: rgba(239,68,68,0.1); color: #DC2626; border: 1.5px solid rgba(239,68,68,0.2); }
+    .risk-high { background: rgba(234,88,12,0.1); color: #C2410C; border: 1.5px solid rgba(234,88,12,0.2); }
+    .risk-medium { background: rgba(245,158,11,0.1); color: #B45309; border: 1.5px solid rgba(245,158,11,0.2); }
+    .risk-low { background: rgba(16,185,129,0.1); color: #059669; border: 1.5px solid rgba(16,185,129,0.2); }
+
+    /* ── Live pulse ── */
+    .live-dot { animation: livePulse 1.8s infinite; }
+    @keyframes livePulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.4)} }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #f8fafc; }
+    ::-webkit-scrollbar-thumb { background: rgba(37,99,235,0.2); border-radius: 3px; }
+
+    /* ── Trend chip ── */
+    .trend-up { background: rgba(16,185,129,0.1); color: #059669; border-radius: 20px; padding: 2px 8px; font-size: 11px; font-weight: 700; }
+    .trend-neutral { background: rgba(100,116,139,0.1); color: #475569; border-radius: 20px; padding: 2px 8px; font-size: 11px; font-weight: 700; }
+
+    /* ── Table alternating rows ── */
+    tbody tr:nth-child(even) { background: rgba(240,244,255,0.6); }
+    tbody tr:hover { background: rgba(37,99,235,0.04) !important; }
+
+    /* ── KPI icon containers ── */
+    .kpi-icon-blue { background: linear-gradient(135deg, rgba(37,99,235,0.12), rgba(14,165,233,0.08)); }
+    .kpi-icon-green { background: linear-gradient(135deg, rgba(16,185,129,0.12), rgba(5,150,105,0.08)); }
+    .kpi-icon-purple { background: linear-gradient(135deg, rgba(124,58,237,0.12), rgba(139,92,246,0.08)); }
+    .kpi-icon-orange { background: linear-gradient(135deg, rgba(245,158,11,0.12), rgba(217,119,6,0.08)); }
+
+    /* ── Section fade-in ── */
+    .section-in { animation: sectionIn .3s ease-out; }
+    @keyframes sectionIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+
+    /* ── Risk legend ── */
+    .risk-legend span { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:5px; vertical-align:middle; }
+
+    /* ── Gradient button ── */
+    .btn-grad {
+      background: linear-gradient(135deg, #2563EB, #7C3AED);
+      color: white; border: none; border-radius: 12px;
+      padding: 8px 16px; font-size: 12px; font-weight: 700;
+      cursor: pointer; transition: all .2s;
+      box-shadow: 0 4px 12px rgba(37,99,235,0.25);
+    }
+    .btn-grad:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(37,99,235,0.35); }
+
+    /* ── Language switcher ── */
+    .lang-btn { padding: 3px 8px; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer; border: 1.5px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.55); transition: all .2s; }
+    .lang-btn.lang-active { background: linear-gradient(135deg,#2563EB,#7C3AED); color: white; border-color: transparent; box-shadow: 0 2px 8px rgba(37,99,235,0.4); }
+    .lang-switcher { display: flex; gap: 4px; align-items: center; }
+  </style>
+</head>
+<body>
+
+<!-- ── SIDEBAR ──────────────────────────────────────────────────────────── -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg"
+           style="background:linear-gradient(135deg,#2563EB,#7C3AED)">
+        <span class="text-white font-extrabold text-lg">M</span>
+      </div>
+      <div>
+        <div class="font-extrabold text-white text-sm leading-none" data-i18n="dash_app">MedCycle</div>
+        <div class="text-xs mt-0.5" style="color:rgba(255,255,255,0.4)" data-i18n="dash_subtitle">Gov Dashboard</div>
+      </div>
+    </div>
+  </div>
+
+  <nav class="flex-1 p-3 pt-4 space-y-0.5">
+    <button onclick="showSection('overview')" class="nav-item active" id="nav-overview">
+      <span class="nav-icon">📊</span> <span data-i18n="dash_overview">Overview</span>
+    </button>
+    <button onclick="showSection('heatmap')" class="nav-item" id="nav-heatmap">
+      <span class="nav-icon">🗺️</span> <span data-i18n="dash_heatmap">Heatmap</span>
+    </button>
+    <button onclick="showSection('amrzones')" class="nav-item" id="nav-amrzones">
+      <span class="nav-icon">⚠️</span> <span data-i18n="dash_amrzones">AMR Zones</span>
+    </button>
+    <button onclick="showSection('pharmacies')" class="nav-item" id="nav-pharmacies">
+      <span class="nav-icon">🏪</span> <span data-i18n="dash_pharmacies">Pharmacies</span>
+    </button>
+    <button onclick="showSection('states')" class="nav-item" id="nav-states">
+      <span class="nav-icon">📍</span> <span data-i18n="dash_states">State Data</span>
+    </button>
+  </nav>
+
+  <div class="p-4 border-t" style="border-color:rgba(255,255,255,0.07)">
+    <div class="flex items-center gap-2">
+      <span class="w-2.5 h-2.5 rounded-full live-dot flex-shrink-0" style="background:#10B981"></span>
+      <span class="text-xs" style="color:rgba(255,255,255,0.35)" data-i18n="dash_live">Live · Auto-refresh 30s</span>
+    </div>
+    <div class="mt-2 text-xs" style="color:rgba(255,255,255,0.2)">MedCycle Analytics v2.0</div>
+  </div>
+</aside>
+
+<!-- ── MAIN ──────────────────────────────────────────────────────────────── -->
+<main class="main">
+
+  <!-- Top Bar -->
+  <header class="topbar">
+    <div>
+      <div class="flex items-center gap-2">
+        <span class="text-xs font-medium" style="color:#94a3b8">MedCycle</span>
+        <span class="text-slate-300">/</span>
+        <span class="text-sm font-bold" style="color:#0A0F1E" id="page-title">Overview</span>
+      </div>
+      <p class="text-xs mt-0.5 font-medium" style="color:#94a3b8" id="page-subtitle">Real-time AMR disposal monitoring</p>
+    </div>
+    <div class="flex items-center gap-3">
+      <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full" style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2)">
+        <span class="w-2 h-2 rounded-full live-dot" style="background:#10B981"></span>
+        <span class="text-xs font-semibold" style="color:#059669" id="last-updated">Live</span>
+      </div>
+      <select id="period-filter" onchange="refreshData()"
+        class="text-xs rounded-xl px-3 py-2 font-semibold border cursor-pointer"
+        style="border-color:#e2e8f0;color:#475569;background:white">
+        <option value="7" data-i18n="dash_last7">Last 7 days</option>
+        <option value="30" selected data-i18n="dash_last30">Last 30 days</option>
+        <option value="90" data-i18n="dash_last90">Last 90 days</option>
+      </select>
+      <div class="lang-switcher">
+        <button class="lang-btn lang-active" data-lang="en" onclick="setLanguage('en')">EN</button>
+        <button class="lang-btn" data-lang="hi" onclick="setLanguage('hi')">हि</button>
+        <button class="lang-btn" data-lang="mr" onclick="setLanguage('mr')">म</button>
+        <button class="lang-btn" data-lang="ta" onclick="setLanguage('ta')">த</button>
+      </div>
+      <button onclick="refreshData()" class="btn-grad flex items-center gap-1.5">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+        <span data-i18n="dash_refresh">Refresh</span>
+      </button>
+    </div>
+  </header>
+
+  <div class="p-6 space-y-6">
+
+    <!-- ══ OVERVIEW SECTION ════════════════════════════════════════════ -->
+    <div id="section-overview" class="space-y-6 section-in">
+
+      <!-- KPI Cards -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-5">
+
+        <!-- Total Disposals -->
+        <div class="metric-card p-5">
+          <div class="flex justify-between items-start">
+            <div class="flex-1">
+              <div class="text-xs font-semibold uppercase tracking-wide" style="color:#94a3b8" data-i18n="dash_total_disp">Total Disposals</div>
+              <div class="text-3xl font-extrabold mt-2 mb-1" style="color:#0A0F1E" id="kpi-total">—</div>
+              <div class="trend-up inline-block" id="kpi-total-trend">—</div>
+            </div>
+            <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl kpi-icon-blue flex-shrink-0">📦</div>
+          </div>
+        </div>
+
+        <!-- Verified -->
+        <div class="metric-card p-5">
+          <div class="flex justify-between items-start">
+            <div class="flex-1">
+              <div class="text-xs font-semibold uppercase tracking-wide" style="color:#94a3b8" data-i18n="dash_verified">Verified</div>
+              <div class="text-3xl font-extrabold mt-2 mb-1" style="color:#10B981" id="kpi-verified">—</div>
+              <div class="trend-neutral inline-block" id="kpi-verify-rate">—% rate</div>
+            </div>
+            <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl kpi-icon-green flex-shrink-0">✅</div>
+          </div>
+        </div>
+
+        <!-- Citizens -->
+        <div class="metric-card p-5">
+          <div class="flex justify-between items-start">
+            <div class="flex-1">
+              <div class="text-xs font-semibold uppercase tracking-wide" style="color:#94a3b8" data-i18n="dash_citizens">Citizens</div>
+              <div class="text-3xl font-extrabold mt-2 mb-1" style="color:#7C3AED" id="kpi-citizens">—</div>
+              <div class="trend-neutral inline-block" data-i18n="dash_reg_users">registered users</div>
+            </div>
+            <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl kpi-icon-purple flex-shrink-0">👥</div>
+          </div>
+        </div>
+
+        <!-- Active Pharmacies -->
+        <div class="metric-card p-5">
+          <div class="flex justify-between items-start">
+            <div class="flex-1">
+              <div class="text-xs font-semibold uppercase tracking-wide" style="color:#94a3b8" data-i18n="dash_active_ph">Active Pharmacies</div>
+              <div class="text-3xl font-extrabold mt-2 mb-1" style="color:#F59E0B" id="kpi-pharmacies">—</div>
+              <div class="trend-neutral inline-block" data-i18n="dash_coll_pts">collection points</div>
+            </div>
+            <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl kpi-icon-orange flex-shrink-0">🏪</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Row 1 -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div class="metric-card p-5">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <div class="font-bold text-sm" style="color:#0A0F1E" data-i18n="dash_trend_title">Daily Disposal Trend</div>
+              <div class="text-xs mt-0.5" style="color:#94a3b8" data-i18n="dash_trend_sub">Last 7 days performance</div>
+            </div>
+            <div class="w-8 h-8 rounded-xl kpi-icon-blue flex items-center justify-center text-sm">📈</div>
+          </div>
+          <canvas id="trend-chart"></canvas>
+        </div>
+        <div class="metric-card p-5">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <div class="font-bold text-sm" style="color:#0A0F1E" data-i18n="dash_breakdown_title">Antibiotic Class Breakdown</div>
+              <div class="text-xs mt-0.5" style="color:#94a3b8" data-i18n="dash_breakdown_sub">By disposal volume</div>
+            </div>
+            <div class="w-8 h-8 rounded-xl kpi-icon-purple flex items-center justify-center text-sm">💊</div>
+          </div>
+          <canvas id="breakdown-chart"></canvas>
+        </div>
+      </div>
+
+      <!-- Charts Row 2 -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <div class="metric-card p-5">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <div class="font-bold text-sm" style="color:#0A0F1E" data-i18n="dash_method_title">Disposal Method</div>
+              <div class="text-xs mt-0.5" style="color:#94a3b8" data-i18n="dash_method_sub">Pharmacy vs. home</div>
+            </div>
+            <div class="w-8 h-8 rounded-xl kpi-icon-green flex items-center justify-center text-sm">🏥</div>
+          </div>
+          <canvas id="method-chart"></canvas>
+        </div>
+        <div class="metric-card p-5 col-span-2">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <div class="font-bold text-sm" style="color:#0A0F1E" data-i18n="dash_state_rate_title">Verification Rate by State</div>
+              <div class="text-xs mt-0.5" style="color:#94a3b8" data-i18n="dash_state_rate_sub">Total vs. verified disposals</div>
+            </div>
+            <div class="w-8 h-8 rounded-xl kpi-icon-blue flex items-center justify-center text-sm">📊</div>
+          </div>
+          <canvas id="state-bar-chart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ HEATMAP SECTION ═════════════════════════════════════════════ -->
+    <div id="section-heatmap" class="hidden space-y-5">
+      <div class="metric-card p-5">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <div>
+            <div class="font-bold" style="color:#0A0F1E" data-i18n="dash_heatmap_title">Disposal Activity Heatmap</div>
+            <div class="text-xs mt-0.5" style="color:#94a3b8" data-i18n="dash_heatmap_circle">District-level aggregated data · circle size = volume</div>
+          </div>
+          <select id="heatmap-state-filter" onchange="loadHeatmap()"
+            class="text-xs rounded-xl px-3 py-2 font-semibold border cursor-pointer"
+            style="border-color:#e2e8f0;color:#475569;background:white">
+            <option value="" data-i18n="dash_all_states">All States</option>
+            <option value="Delhi">Delhi</option>
+            <option value="Maharashtra">Maharashtra</option>
+            <option value="Karnataka">Karnataka</option>
+            <option value="Tamil Nadu">Tamil Nadu</option>
+            <option value="West Bengal">West Bengal</option>
+            <option value="Telangana">Telangana</option>
+            <option value="Rajasthan">Rajasthan</option>
+          </select>
+        </div>
+
+        <!-- Risk legend -->
+        <div class="risk-legend flex flex-wrap gap-4 text-xs mb-4 p-3 rounded-[14px]" style="background:#f8fafc;border:1px solid #e2e8f0">
+          <span><span style="background:#dc2626"></span><span class="font-semibold text-red-700" data-i18n="dash_risk_critical">Critical</span> — <span data-i18n="dash_risk_crit_desc">Immediate intervention needed</span></span>
+          <span><span style="background:#ea580c"></span><span class="font-semibold text-orange-700" data-i18n="dash_risk_high">High</span> — <span data-i18n="dash_risk_high_desc">Monitor closely</span></span>
+          <span><span style="background:#ca8a04"></span><span class="font-semibold text-yellow-700" data-i18n="dash_risk_medium">Medium</span> — <span data-i18n="dash_risk_med_desc">Awareness campaign</span></span>
+          <span><span style="background:#16a34a"></span><span class="font-semibold text-green-700" data-i18n="dash_risk_low">Low</span> — <span data-i18n="dash_risk_low_desc">Normal range</span></span>
+        </div>
+
+        <div id="heatmap-map" style="box-shadow:0 8px 32px rgba(37,99,235,0.10)"></div>
+      </div>
+    </div>
+
+    <!-- ══ AMR ZONES SECTION ═══════════════════════════════════════════ -->
+    <div id="section-amrzones" class="hidden space-y-5">
+      <div class="metric-card p-5">
+        <div class="mb-5">
+          <div class="font-bold text-base" style="color:#0A0F1E" data-i18n="dash_amr_title">High-Risk AMR Zones</div>
+          <div class="text-xs mt-1" style="color:#94a3b8" data-i18n="dash_amr_sub">Districts with high antibiotic disposal volume — potential AMR hotspots requiring intervention</div>
+        </div>
+        <div id="amr-zones-table" class="space-y-2">
+          <div class="text-center py-10 text-slate-400">
+            <div class="text-3xl mb-2">⏳</div>
+            Loading AMR zone data...
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ PHARMACIES SECTION ══════════════════════════════════════════ -->
+    <div id="section-pharmacies" class="hidden space-y-5">
+      <div class="metric-card p-5">
+        <div class="mb-5">
+          <div class="font-bold text-base" style="color:#0A0F1E" data-i18n="dash_ph_title">Top Performing Collection Points</div>
+          <div class="text-xs mt-1" style="color:#94a3b8" data-i18n="dash_ph_sub">Ranked by total verified disposals</div>
+        </div>
+        <div id="pharmacy-perf-table" class="space-y-2">
+          <div class="text-center py-10 text-slate-400">Loading...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ STATES SECTION ═════════════════════════════════════════════ -->
+    <div id="section-states" class="hidden space-y-5">
+      <div class="metric-card p-5">
+        <div class="mb-5">
+          <div class="font-bold text-base" style="color:#0A0F1E" data-i18n="dash_states_title">State-wise Disposal Summary</div>
+          <div class="text-xs mt-1" style="color:#94a3b8" data-i18n="dash_states_sub">Per-state disposal breakdown for policy decisions</div>
+        </div>
+        <div class="overflow-x-auto rounded-[14px]" style="border:1px solid #f1f5f9">
+          <table class="w-full text-sm">
+            <thead>
+              <tr style="background:linear-gradient(135deg,rgba(37,99,235,0.04),rgba(124,58,237,0.02))">
+                <th class="text-left px-4 py-3 text-xs font-bold uppercase tracking-wide" style="color:#64748b" data-i18n="dash_states_state">State</th>
+                <th class="text-right px-4 py-3 text-xs font-bold uppercase tracking-wide" style="color:#64748b" data-i18n="dash_states_total">Total</th>
+                <th class="text-right px-4 py-3 text-xs font-bold uppercase tracking-wide" style="color:#64748b" data-i18n="dash_states_verified">Verified</th>
+                <th class="text-right px-4 py-3 text-xs font-bold uppercase tracking-wide" style="color:#64748b" data-i18n="dash_col_home">Home</th>
+                <th class="text-right px-4 py-3 text-xs font-bold uppercase tracking-wide" style="color:#64748b" data-i18n="dash_col_rate">Rate</th>
+              </tr>
+            </thead>
+            <tbody id="states-table-body">
+              <tr><td colspan="5" class="text-center py-10 text-slate-400">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /p-6 -->
+</main>
+
+<script>
+const API_BASE = 'http://localhost:8000/api/v1';
+let charts = {};
+
+// ── SECTION NAVIGATION ────────────────────────────────────────────────
+const SECTIONS = ['overview','heatmap','amrzones','pharmacies','states'];
+const TITLE_KEYS = {
+  overview:   ['dash_page_overview', 'dash_page_sub'],
+  heatmap:    ['dash_heatmap_title', 'dash_heatmap_sub'],
+  amrzones:   ['dash_amr_title', 'dash_amr_sub'],
+  pharmacies: ['dash_ph_title', 'dash_ph_sub'],
+  states:     ['dash_states_title', 'dash_states_sub'],
+};
+let currentSection = 'overview';
+
+function updateSectionTitle() {
+  const keys = TITLE_KEYS[currentSection];
+  if (typeof t === 'function') {
+    document.getElementById('page-title').textContent = t(keys[0]);
+    document.getElementById('page-subtitle').textContent = t(keys[1]);
+  }
+}
+
+function showSection(name) {
+  SECTIONS.forEach(s => {
+    document.getElementById(`section-${s}`).classList.add('hidden');
+    document.getElementById(`nav-${s}`).classList.remove('active');
+  });
+  const el = document.getElementById(`section-${name}`);
+  el.classList.remove('hidden');
+  el.classList.add('section-in');
+  document.getElementById(`nav-${name}`).classList.add('active');
+  currentSection = name;
+  updateSectionTitle();
+
+  if (name === 'heatmap') { loadHeatmap(); setTimeout(() => heatmapMapInstance && heatmapMapInstance.invalidateSize(), 200); }
+  if (name === 'amrzones') loadAMRZones();
+  if (name === 'pharmacies') loadPharmacyPerformance();
+  if (name === 'states') loadStateData();
+}
+
+document.addEventListener('langchange', () => {
+  updateSectionTitle();
+});
+
+// ── DATA LOADING ──────────────────────────────────────────────────────
+async function fetchOrDemo(url, demo) {
+  try {
+    const r = await fetch(url);
+    if (r.ok) return await r.json();
+  } catch (e) {}
+  return demo;
+}
+
+const DEMO_STATS = {
+  total_disposals: 1847,
+  verified_disposals: 1523,
+  home_disposals: 324,
+  pharmacy_disposals: 1199,
+  total_citizens: 612,
+  active_pharmacies: 47,
+  verification_rate: 82.5,
+  daily_trend: [
+    { day:'2026-03-26', count:48 }, { day:'2026-03-27', count:61 },
+    { day:'2026-03-28', count:55 }, { day:'2026-03-29', count:72 },
+    { day:'2026-03-30', count:83 }, { day:'2026-03-31', count:91 },
+    { day:'2026-04-01', count:67 },
+  ],
+};
+
+async function loadOverview() {
+  const stats = await fetchOrDemo(`${API_BASE}/analytics/stats/`, DEMO_STATS);
+  document.getElementById('kpi-total').textContent = stats.total_disposals.toLocaleString();
+  document.getElementById('kpi-verified').textContent = stats.verified_disposals.toLocaleString();
+  document.getElementById('kpi-verify-rate').textContent = `${stats.verification_rate}% rate`;
+  document.getElementById('kpi-citizens').textContent = stats.total_citizens.toLocaleString();
+  document.getElementById('kpi-pharmacies').textContent = stats.active_pharmacies.toLocaleString();
+  document.getElementById('kpi-total-trend').textContent = `↑ ${stats.pharmacy_disposals} pharmacy`;
+
+  renderTrendChart(stats.daily_trend || []);
+  await loadBreakdown();
+  renderMethodChart(stats.pharmacy_disposals, stats.home_disposals);
+  await loadStateBar();
+}
+
+function renderTrendChart(trend) {
+  const ctx = document.getElementById('trend-chart').getContext('2d');
+  if (charts.trend) charts.trend.destroy();
+  charts.trend = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: trend.map(d => d.day?.slice(5) || d.day),
+      datasets: [{
+        label: 'Disposals',
+        data: trend.map(d => d.count),
+        borderColor: '#2563EB',
+        backgroundColor: 'rgba(37,99,235,0.06)',
+        borderWidth: 2.5,
+        fill: true,
+        tension: 0.4,
+        pointBackgroundColor: '#2563EB',
+        pointBorderColor: 'white',
+        pointBorderWidth: 2,
+        pointRadius: 5,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)' }, ticks: { font: { size: 10, family: 'Plus Jakarta Sans' }, color: '#94a3b8' } },
+        x: { grid: { display: false }, ticks: { font: { size: 10, family: 'Plus Jakarta Sans' }, color: '#94a3b8' } }
+      }
+    }
+  });
+}
+
+async function loadBreakdown() {
+  const demo = { breakdown: [
+    { antibiotic_class:'Penicillin', count:487 },
+    { antibiotic_class:'Fluoroquinolone', count:324 },
+    { antibiotic_class:'Macrolide', count:298 },
+    { antibiotic_class:'Cephalosporin', count:241 },
+    { antibiotic_class:'Tetracycline', count:187 },
+    { antibiotic_class:'Other', count:310 },
+  ]};
+  const data = await fetchOrDemo(`${API_BASE}/analytics/antibiotic-breakdown/`, demo);
+  const ctx = document.getElementById('breakdown-chart').getContext('2d');
+  if (charts.breakdown) charts.breakdown.destroy();
+  charts.breakdown = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: data.breakdown.map(d => d.antibiotic_class),
+      datasets: [{
+        data: data.breakdown.map(d => d.count),
+        backgroundColor: ['#2563EB','#EF4444','#10B981','#F59E0B','#7C3AED','#0EA5E9'],
+        borderWidth: 3, borderColor: '#fff',
+        hoverOffset: 6,
+      }]
+    },
+    options: {
+      responsive: true,
+      cutout: '60%',
+      plugins: {
+        legend: { position: 'right', labels: { font: { size: 10, family: 'Plus Jakarta Sans' }, boxWidth: 10, padding: 10, color: '#475569' } },
+        tooltip: {
+          backgroundColor: 'rgba(255,255,255,0.95)',
+          titleColor: '#0A0F1E', bodyColor: '#475569',
+          borderColor: 'rgba(37,99,235,0.15)', borderWidth: 1,
+          padding: 10, cornerRadius: 10,
+          callbacks: { label: ctx => ` ${ctx.label}: ${ctx.raw} disposals` }
+        }
+      }
+    }
+  });
+}
+
+function renderMethodChart(pharmacy, home) {
+  const ctx = document.getElementById('method-chart').getContext('2d');
+  if (charts.method) charts.method.destroy();
+  charts.method = new Chart(ctx, {
+    type: 'pie',
+    data: {
+      labels: ['Pharmacy Drop-off', 'Home Disposal'],
+      datasets: [{
+        data: [pharmacy, home],
+        backgroundColor: ['#2563EB', '#F59E0B'],
+        borderWidth: 3, borderColor: '#fff',
+        hoverOffset: 6,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { size: 10, family: 'Plus Jakarta Sans' }, boxWidth: 10, padding: 10, color: '#475569' } },
+        tooltip: {
+          backgroundColor: 'rgba(255,255,255,0.95)',
+          titleColor: '#0A0F1E', bodyColor: '#475569',
+          borderColor: 'rgba(37,99,235,0.15)', borderWidth: 1,
+          padding: 10, cornerRadius: 10,
+        }
+      }
+    }
+  });
+}
+
+async function loadStateBar() {
+  const demo = { states: [
+    { state:'Maharashtra', total:412, verified:359 },
+    { state:'Delhi', total:298, verified:241 },
+    { state:'Karnataka', total:287, verified:234 },
+    { state:'Tamil Nadu', total:201, verified:165 },
+    { state:'West Bengal', total:178, verified:142 },
+    { state:'Telangana', total:156, verified:128 },
+  ]};
+  const data = await fetchOrDemo(`${API_BASE}/analytics/state-summary/`, demo);
+  const states = data.states.slice(0, 6);
+  const ctx = document.getElementById('state-bar-chart').getContext('2d');
+  if (charts.stateBar) charts.stateBar.destroy();
+  charts.stateBar = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: states.map(s => s.state),
+      datasets: [
+        { label: 'Total', data: states.map(s => s.total), backgroundColor: 'rgba(37,99,235,0.15)', borderColor: '#2563EB', borderWidth: 2, borderRadius: 6 },
+        { label: 'Verified', data: states.map(s => s.verified), backgroundColor: 'rgba(16,185,129,0.15)', borderColor: '#10B981', borderWidth: 2, borderRadius: 6 },
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { labels: { font: { size: 10, family: 'Plus Jakarta Sans' }, boxWidth: 10, color: '#475569' } },
+        tooltip: {
+          backgroundColor: 'rgba(255,255,255,0.95)',
+          titleColor: '#0A0F1E', bodyColor: '#475569',
+          borderColor: 'rgba(37,99,235,0.15)', borderWidth: 1,
+          padding: 10, cornerRadius: 10,
+        }
+      },
+      scales: {
+        y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)' }, ticks: { font: { size: 10, family: 'Plus Jakarta Sans' }, color: '#94a3b8' } },
+        x: { grid: { display: false }, ticks: { font: { size: 10, family: 'Plus Jakarta Sans' }, color: '#94a3b8' } }
+      }
+    }
+  });
+}
+
+// ── HEATMAP (Leaflet) ─────────────────────────────────────────────────
+let heatmapMapInstance = null;
+let heatmapCircles = [];
+
+const RISK_COLORS = {
+  critical: { fill: '#dc2626', stroke: '#991b1b' },
+  high:     { fill: '#ea580c', stroke: '#9a3412' },
+  medium:   { fill: '#ca8a04', stroke: '#854d0e' },
+  low:      { fill: '#16a34a', stroke: '#166534' },
+};
+
+const DEMO_HEATMAP = { heatmap: [
+  { district:'Connaught Place', state:'Delhi', lat:28.6315, lng:77.2167, count:89, risk_level:'high' },
+  { district:'Bandra West', state:'Maharashtra', lat:19.0607, lng:72.8362, count:67, risk_level:'high' },
+  { district:'MG Road', state:'Karnataka', lat:12.9757, lng:77.6011, count:54, risk_level:'medium' },
+  { district:'T Nagar', state:'Tamil Nadu', lat:13.0418, lng:80.2341, count:42, risk_level:'medium' },
+  { district:'Park Street', state:'West Bengal', lat:22.5514, lng:88.3520, count:38, risk_level:'medium' },
+  { district:'Banjara Hills', state:'Telangana', lat:17.4126, lng:78.4483, count:71, risk_level:'high' },
+  { district:'Jubilee Hills', state:'Telangana', lat:17.4300, lng:78.4100, count:48, risk_level:'critical' },
+  { district:'Koregaon Park', state:'Maharashtra', lat:18.5362, lng:73.8937, count:29, risk_level:'low' },
+  { district:'Civil Lines', state:'Rajasthan', lat:26.9124, lng:75.7873, count:18, risk_level:'low' },
+  { district:'Gomti Nagar', state:'Uttar Pradesh', lat:26.8600, lng:81.0200, count:23, risk_level:'low' },
+  { district:'Navrangpura', state:'Gujarat', lat:23.0395, lng:72.5680, count:31, risk_level:'medium' },
+  { district:'Whitefield', state:'Karnataka', lat:12.9698, lng:77.7499, count:61, risk_level:'high' },
+  { district:'Salt Lake', state:'West Bengal', lat:22.5833, lng:88.4167, count:27, risk_level:'medium' },
+  { district:'Andheri West', state:'Maharashtra', lat:19.1307, lng:72.8268, count:44, risk_level:'medium' },
+]};
+
+async function loadHeatmap() {
+  const state = document.getElementById('heatmap-state-filter').value;
+  const days = document.getElementById('period-filter').value;
+  const data = await fetchOrDemo(`${API_BASE}/analytics/heatmap/?days=${days}&state=${state}`, DEMO_HEATMAP);
+  renderHeatmapMap(data.heatmap || []);
+}
+
+function renderHeatmapMap(points) {
+  if (!heatmapMapInstance) {
+    heatmapMapInstance = L.map('heatmap-map').setView([20.5937, 78.9629], 5);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      maxZoom: 18,
+    }).addTo(heatmapMapInstance);
+    setTimeout(() => heatmapMapInstance.invalidateSize(), 150);
+  }
+
+  heatmapCircles.forEach(c => heatmapMapInstance.removeLayer(c));
+  heatmapCircles = [];
+
+  if (!points.length) return;
+
+  const max = Math.max(...points.map(p => p.count));
+
+  points.forEach(p => {
+    const color = RISK_COLORS[p.risk_level] || RISK_COLORS.medium;
+    const radius = 12000 + (p.count / max) * 40000;
+
+    const circle = L.circle([p.lat, p.lng], {
+      radius,
+      color: color.stroke,
+      fillColor: color.fill,
+      fillOpacity: 0.35,
+      weight: 1.5,
+    }).addTo(heatmapMapInstance);
+
+    circle.bindPopup(`
+      <div style="font-family:'Plus Jakarta Sans',sans-serif">
+        <div style="font-weight:800;font-size:13px;color:#0A0F1E;margin-bottom:2px">${p.district}</div>
+        <div style="color:#64748b;font-size:11px">${p.state}</div>
+        <div style="margin-top:8px;display:flex;justify-content:space-between;gap:12px">
+          <span style="color:#475569;font-size:11px">Disposals</span>
+          <strong style="color:#0A0F1E;font-size:12px">${p.count}</strong>
+        </div>
+        <div style="display:flex;justify-content:space-between;gap:12px">
+          <span style="color:#475569;font-size:11px">AMR Risk</span>
+          <strong style="color:${color.fill};text-transform:uppercase;font-size:11px">${p.risk_level}</strong>
+        </div>
+      </div>
+    `);
+    heatmapCircles.push(circle);
+  });
+
+  const group = L.featureGroup(heatmapCircles);
+  heatmapMapInstance.fitBounds(group.getBounds().pad(0.1));
+}
+
+// ── AMR ZONES ─────────────────────────────────────────────────────────
+async function loadAMRZones() {
+  const demo = { zones: [
+    { district:'Banjara Hills', state:'Telangana', antibiotic_class:'fluoroquinolone', amr_risk_level:'critical', disposal_count:71 },
+    { district:'Connaught Place', state:'Delhi', antibiotic_class:'penicillin', amr_risk_level:'high', disposal_count:89 },
+    { district:'Whitefield', state:'Karnataka', antibiotic_class:'cephalosporin', amr_risk_level:'high', disposal_count:61 },
+    { district:'Bandra West', state:'Maharashtra', antibiotic_class:'fluoroquinolone', amr_risk_level:'critical', disposal_count:67 },
+    { district:'MG Road', state:'Karnataka', antibiotic_class:'macrolide', amr_risk_level:'medium', disposal_count:54 },
+    { district:'Jubilee Hills', state:'Telangana', antibiotic_class:'fluoroquinolone', amr_risk_level:'high', disposal_count:48 },
+    { district:'T Nagar', state:'Tamil Nadu', antibiotic_class:'tetracycline', amr_risk_level:'medium', disposal_count:42 },
+    { district:'Park Street', state:'West Bengal', antibiotic_class:'penicillin', amr_risk_level:'medium', disposal_count:38 },
+  ]};
+  const data = await fetchOrDemo(`${API_BASE}/analytics/amr-zones/`, demo);
+  const el = document.getElementById('amr-zones-table');
+  const max = Math.max(...data.zones.map(z => z.disposal_count));
+  el.innerHTML = data.zones.map((z, i) => {
+    const riskClass = {
+      critical: 'risk-critical', high: 'risk-high',
+      medium: 'risk-medium', low: 'risk-low'
+    }[z.amr_risk_level] || '';
+    const pct = Math.round((z.disposal_count / max) * 100);
+    const riskColors = { critical:'#EF4444', high:'#F97316', medium:'#F59E0B', low:'#10B981' };
+    const bar = riskColors[z.amr_risk_level] || '#94a3b8';
+    return `
+      <div class="flex items-center gap-4 p-4 rounded-[16px] hover:scale-[1.005] transition-all cursor-default"
+           style="background:rgba(240,244,255,0.5);border:1px solid rgba(37,99,235,0.06)">
+        <div class="w-9 h-9 rounded-[10px] flex items-center justify-center text-sm font-extrabold text-white flex-shrink-0"
+             style="background:linear-gradient(135deg,#2563EB,#7C3AED)">${i+1}</div>
+        <div class="flex-1 min-w-0">
+          <div class="font-bold text-sm" style="color:#0A0F1E">${z.district}, ${z.state}</div>
+          <div class="text-xs mt-0.5" style="color:#94a3b8">${z.antibiotic_class}</div>
+          <div class="mt-2 h-1.5 rounded-full" style="background:#e2e8f0">
+            <div class="h-1.5 rounded-full transition-all" style="width:${pct}%;background:${bar}"></div>
+          </div>
+        </div>
+        <div class="flex flex-col items-end gap-1.5 flex-shrink-0">
+          <span class="text-xs font-bold px-2.5 py-1 rounded-full ${riskClass}">${z.amr_risk_level.toUpperCase()}</span>
+          <div class="text-right">
+            <div class="font-extrabold text-sm" style="color:#0A0F1E">${z.disposal_count}</div>
+            <div class="text-xs" style="color:#94a3b8">disposals</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ── PHARMACY PERFORMANCE ──────────────────────────────────────────────
+async function loadPharmacyPerformance() {
+  const demo = { pharmacies: [
+    { id:1, name:'City Care Pharmacy', city:'Bengaluru', state:'Karnataka', total_verified:312 },
+    { id:2, name:'Apollo Pharmacy', city:'New Delhi', state:'Delhi', total_verified:247 },
+    { id:3, name:'MedPlus Health', city:'Mumbai', state:'Maharashtra', total_verified:189 },
+    { id:4, name:'Wellness Forever', city:'Pune', state:'Maharashtra', total_verified:134 },
+    { id:5, name:'Suraksha Medical', city:'Chennai', state:'Tamil Nadu', total_verified:121 },
+    { id:6, name:'Hetero Pharmacy', city:'Hyderabad', state:'Telangana', total_verified:98 },
+    { id:7, name:'Frank Ross Pharmacy', city:'Kolkata', state:'West Bengal', total_verified:87 },
+  ]};
+  const data = await fetchOrDemo(`${API_BASE}/analytics/pharmacy-performance/`, demo);
+  const el = document.getElementById('pharmacy-perf-table');
+  const max = data.pharmacies[0]?.total_verified || 1;
+  const medals = ['🥇','🥈','🥉'];
+  const medalBgs = [
+    'rgba(245,158,11,0.08)',
+    'rgba(148,163,184,0.08)',
+    'rgba(180,83,9,0.08)',
+  ];
+  el.innerHTML = data.pharmacies.map((p, i) => {
+    const pct = Math.round((p.total_verified / max) * 100);
+    const barColor = i === 0 ? '#F59E0B' : i === 1 ? '#94a3b8' : i === 2 ? '#cd7f32' : '#2563EB';
+    return `
+      <div class="flex items-center gap-4 p-4 rounded-[16px] hover:scale-[1.005] transition-all"
+           style="background:${i < 3 ? medalBgs[i] : 'transparent'};border:1px solid ${i < 3 ? 'rgba(245,158,11,0.1)' : 'transparent'}">
+        <div class="text-2xl w-8 text-center flex-shrink-0">${medals[i] || `<span style="font-size:13px;font-weight:800;color:#94a3b8">${i+1}</span>`}</div>
+        <div class="flex-1 min-w-0">
+          <div class="font-bold text-sm" style="color:#0A0F1E">${p.name}</div>
+          <div class="text-xs mt-0.5" style="color:#94a3b8">${p.city}, ${p.state}</div>
+          <div class="mt-2 h-1.5 rounded-full" style="background:#e2e8f0">
+            <div class="h-1.5 rounded-full transition-all" style="width:${pct}%;background:linear-gradient(90deg,${barColor},${barColor}aa)"></div>
+          </div>
+        </div>
+        <div class="text-right flex-shrink-0">
+          <div class="font-extrabold text-sm" style="color:#2563EB">${p.total_verified}</div>
+          <div class="text-xs" style="color:#94a3b8">verified</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ── STATE DATA ─────────────────────────────────────────────────────────
+async function loadStateData() {
+  const demo = { states: [
+    { state:'Maharashtra', total:412, verified:359, home:53 },
+    { state:'Delhi', total:298, verified:241, home:57 },
+    { state:'Karnataka', total:287, verified:234, home:53 },
+    { state:'Tamil Nadu', total:201, verified:165, home:36 },
+    { state:'West Bengal', total:178, verified:142, home:36 },
+    { state:'Telangana', total:156, verified:128, home:28 },
+    { state:'Gujarat', total:134, verified:107, home:27 },
+    { state:'Rajasthan', total:98, verified:71, home:27 },
+    { state:'Uttar Pradesh', total:83, verified:59, home:24 },
+  ]};
+  const data = await fetchOrDemo(`${API_BASE}/analytics/state-summary/`, demo);
+  const tbody = document.getElementById('states-table-body');
+  tbody.innerHTML = data.states.map((s, i) => {
+    const rate = s.total ? Math.round(s.verified/s.total*100) : 0;
+    const rateColor = rate >= 80 ? '#059669' : rate >= 60 ? '#B45309' : '#DC2626';
+    const rateBg = rate >= 80 ? 'rgba(16,185,129,0.08)' : rate >= 60 ? 'rgba(245,158,11,0.08)' : 'rgba(239,68,68,0.08)';
+    return `
+      <tr style="border-bottom:1px solid #f1f5f9">
+        <td class="px-4 py-3 font-semibold text-sm" style="color:#0A0F1E">${s.state || '—'}</td>
+        <td class="px-4 py-3 text-right font-bold text-sm" style="color:#0A0F1E">${s.total.toLocaleString()}</td>
+        <td class="px-4 py-3 text-right font-bold text-sm" style="color:#10B981">${s.verified.toLocaleString()}</td>
+        <td class="px-4 py-3 text-right font-semibold text-sm" style="color:#F59E0B">${s.home.toLocaleString()}</td>
+        <td class="px-4 py-3 text-right">
+          <span class="inline-block px-2.5 py-1 rounded-full text-xs font-extrabold"
+                style="background:${rateBg};color:${rateColor}">${rate}%</span>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+// ── REFRESH ────────────────────────────────────────────────────────────
+async function refreshData() {
+  document.getElementById('last-updated').textContent = `Updated ${new Date().toLocaleTimeString()}`;
+  await loadOverview();
+}
+
+// ── INIT ───────────────────────────────────────────────────────────────
+loadOverview();
+setInterval(refreshData, 30000);
+</script>
+<script src="/static/js/i18n.js"></script>
+</body>
+</html>
