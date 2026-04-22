@@ -283,3 +283,5 @@ python manage.py createsuperuser
 ---
 
 *MedCycle — Every antibiotic you safely dispose protects your community.*
+#   M e d C y c l e  
+ 
