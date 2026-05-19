@@ -1,0 +1,43 @@
+{
+  "@@locale": "mr",
+  "appName": "मेडसायकल",
+  "tagline": "स्मार्ट AMR विल्हेवाट",
+  "navHome": "मुख्यपृष्ठ",
+  "navDispose": "विल्हेवाट",
+  "navMap": "नकाशा",
+  "navRewards": "बक्षिसे",
+  "navChat": "मेडबॉट",
+  "homeGreeting": "नमस्कार",
+  "homeSubtitle": "सुरक्षित विल्हेवाट करा, बक्षिसे मिळवा",
+  "disposeTitle": "औषध विल्हेवाट",
+  "mapTitle": "फार्मसी शोधा",
+  "rewardsTitle": "माझी बक्षिसे",
+  "chatTitle": "मेडबॉट",
+  "chatPlaceholder": "औषध विल्हेवाटीबद्दल विचारा...",
+  "chatGreeting": "नमस्कार! मी मेडबॉट आहे, सुरक्षित प्रतिजैविक विल्हेवाटीसाठी तुमचा AI सहाय्यक।",
+  "medicineName": "औषधाचे नाव",
+  "quantity": "प्रमाण",
+  "expiryDate": "कालबाह्यता तारीख",
+  "amrRiskLevel": "AMR जोखीम पातळी",
+  "generateQr": "QR कोड तयार करा",
+  "qrReady": "तुमचा QR कोड तयार आहे",
+  "qrInstruction": "हा QR जवळच्या फार्मसीला दाखवा",
+  "locateMe": "माझे स्थान",
+  "totalPoints": "एकूण गुण",
+  "totalDisposals": "विल्हेवाट",
+  "badges": "बॅज",
+  "leaderboard": "लीडरबोर्ड",
+  "homeDisposalGuide": "घरातून विल्हेवाट मार्गदर्शिका",
+  "whyThisMatters": "हे का महत्त्वाचे आहे",
+  "startDisposal": "विल्हेवाट सुरू करा",
+  "sendMessage": "पाठवा",
+  "loading": "लोड होत आहे...",
+  "kmAway": "{distance} किमी दूर",
+  "@kmAway": {
+    "placeholders": {
+      "distance": {
+        "type": "String"
+      }
+    }
+  }
+}

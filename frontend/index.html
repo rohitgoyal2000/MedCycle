@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-  <title>MedCycle — Safe Antibiotic Disposal</title>
+  <title>MedCycle — Safe Medicine Disposal</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -13,7 +13,6 @@
   <style>
     * { font-family: 'Plus Jakarta Sans', sans-serif; box-sizing: border-box; }
 
-    /* ── Mesh animated background ── */
     body {
       background: #F0F4FF;
       min-height: 100vh;
@@ -30,7 +29,6 @@
       50% { background-position: 100% 50%; }
     }
 
-    /* ── Design tokens ── */
     :root {
       --primary: #2563EB;
       --secondary: #7C3AED;
@@ -42,8 +40,8 @@
     }
     .grad-main { background: linear-gradient(135deg, #2563EB 0%, #7C3AED 50%, #0EA5E9 100%); }
     .grad-text { background: linear-gradient(135deg, #2563EB, #7C3AED, #0EA5E9); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .grad-green { background: linear-gradient(135deg, #059669 0%, #10B981 50%, #34D399 100%); }
 
-    /* ── Glass card ── */
     .glass-card {
       backdrop-filter: blur(20px);
       background: rgba(255,255,255,0.85);
@@ -57,7 +55,6 @@
       border-bottom: 1px solid rgba(37,99,235,0.08);
     }
 
-    /* ── Bottom nav ── */
     .bottom-nav {
       position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
       backdrop-filter: blur(24px);
@@ -73,7 +70,6 @@
     .nav-btn.active .nav-underline { width: 24px; height: 3px; border-radius: 2px; background: linear-gradient(90deg, #2563EB, #7C3AED); margin-top: 2px; }
     .nav-btn .nav-underline { width: 0; height: 3px; border-radius: 2px; background: transparent; margin-top: 2px; transition: width .2s; }
 
-    /* ── Inputs ── */
     .inp {
       width: 100%; border: 1.5px solid #e2e8f0; border-radius: 12px;
       padding: 12px 14px; font-size: 14px; background: white;
@@ -82,7 +78,6 @@
     .inp:focus { outline: none; border-color: #2563EB; box-shadow: 0 0 0 3px rgba(37,99,235,0.12); }
     .inp-label { font-size: 11px; font-weight: 600; color: #64748b; margin-bottom: 5px; display: block; letter-spacing: .02em; text-transform: uppercase; }
 
-    /* ── Buttons ── */
     .btn-primary {
       width: 100%; border-radius: 14px; padding: 14px; font-weight: 700;
       font-size: 14px; color: white; border: none; cursor: pointer;
@@ -100,7 +95,13 @@
     }
     @keyframes shimmerSlide { 0% { left: -100%; } 100% { left: 200%; } }
 
-    /* ── Animations ── */
+    .btn-secondary {
+      width: 100%; border-radius: 14px; padding: 12px; font-weight: 600;
+      font-size: 13px; color: #2563EB; border: 1.5px solid rgba(37,99,235,0.2); cursor: pointer;
+      background: rgba(37,99,235,0.06); transition: all .25s;
+    }
+    .btn-secondary:hover { background: rgba(37,99,235,0.12); }
+
     .slide-up { animation: slideUp .35s cubic-bezier(.22,.68,0,1.2); }
     @keyframes slideUp { from { transform: translateY(24px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     .pulse-dot { animation: pulseDot 2s infinite; }
@@ -108,32 +109,23 @@
     .float-card { animation: floatCard 4s ease-in-out infinite; }
     @keyframes floatCard { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
 
-    /* ── Chat ── */
     .chat-bot-msg {
-      background: rgba(255,255,255,0.85);
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(37,99,235,0.10);
-      border-radius: 4px 18px 18px 18px;
-      padding: 12px 14px;
-      font-size: 13px; color: #1e293b;
-      max-width: 82%;
+      background: rgba(255,255,255,0.85); backdrop-filter: blur(12px);
+      border: 1px solid rgba(37,99,235,0.10); border-radius: 4px 18px 18px 18px;
+      padding: 12px 14px; font-size: 13px; color: #1e293b; max-width: 82%;
       box-shadow: 0 2px 12px rgba(37,99,235,0.06);
     }
     .chat-user-msg {
       background: linear-gradient(135deg, #2563EB, #7C3AED);
-      border-radius: 18px 4px 18px 18px;
-      padding: 12px 14px;
-      font-size: 13px; color: white;
-      max-width: 82%;
+      border-radius: 18px 4px 18px 18px; padding: 12px 14px;
+      font-size: 13px; color: white; max-width: 82%;
     }
     #chat-window { scroll-behavior: smooth; }
 
-    /* ── Map ── */
     #citizen-map { height: 240px; border-radius: 16px; z-index: 1; }
     .leaflet-popup-content { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 12px; line-height: 1.6; min-width: 150px; }
     .leaflet-popup-content-wrapper { border-radius: 14px !important; box-shadow: 0 8px 32px rgba(37,99,235,0.15) !important; }
 
-    /* ── Step indicator ── */
     .step-active-circle {
       width: 32px; height: 32px; border-radius: 50%;
       background: linear-gradient(135deg, #2563EB, #7C3AED);
@@ -156,150 +148,293 @@
     .step-connector-active { flex: 1; height: 3px; background: linear-gradient(90deg, #2563EB, #7C3AED); border-radius: 2px; margin: 0 4px; }
     .step-connector-inactive { flex: 1; height: 3px; background: #e2e8f0; border-radius: 2px; margin: 0 4px; }
 
-    /* ── Badge glow ── */
     .badge-earned { box-shadow: 0 0 16px rgba(245,158,11,0.4); }
-
-    /* ── Progress ring SVG ── */
     .progress-ring-text { font-size: 22px; font-weight: 800; fill: white; }
-
-    /* ── QR border gradient ── */
-    .qr-gradient-border {
-      padding: 3px; border-radius: 20px;
-      background: linear-gradient(135deg, #2563EB, #7C3AED, #0EA5E9);
-    }
+    .qr-gradient-border { padding: 3px; border-radius: 20px; background: linear-gradient(135deg, #2563EB, #7C3AED, #0EA5E9); }
     .qr-inner { background: white; border-radius: 18px; padding: 20px; }
 
-    /* ── Scan suggestion chips ── */
     .chip-blue { background: rgba(37,99,235,0.08); color: #2563EB; border: 1.5px solid rgba(37,99,235,0.2); }
     .chip-red { background: rgba(239,68,68,0.08); color: #DC2626; border: 1.5px solid rgba(239,68,68,0.2); }
     .chip-green { background: rgba(16,185,129,0.08); color: #059669; border: 1.5px solid rgba(16,185,129,0.2); }
     .chip-purple { background: rgba(124,58,237,0.08); color: #7C3AED; border: 1.5px solid rgba(124,58,237,0.2); }
 
-    /* ── Language switcher ── */
     .lang-btn { padding: 3px 8px; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer; border: 1.5px solid #e2e8f0; background: white; color: #64748b; transition: all .2s; }
     .lang-btn.lang-active { background: linear-gradient(135deg,#2563EB,#7C3AED); color: white; border-color: transparent; box-shadow: 0 2px 8px rgba(37,99,235,0.3); }
     .lang-switcher { display: flex; gap: 4px; align-items: center; }
+
+    /* Warning banner for antibiotics */
+    .amr-warning-banner {
+      background: linear-gradient(135deg, rgba(239,68,68,0.06), rgba(239,68,68,0.02));
+      border: 1.5px solid rgba(239,68,68,0.2);
+      border-radius: 16px; padding: 16px;
+    }
+    .edu-card {
+      background: rgba(255,255,255,0.9);
+      border-radius: 16px;
+      border: 1.5px solid rgba(37,99,235,0.1);
+      padding: 16px;
+      transition: all .2s;
+    }
+    .edu-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(37,99,235,0.12); }
+
+    /* Stepper timeline */
+    .timeline-step { position: relative; padding-left: 40px; padding-bottom: 24px; }
+    .timeline-step:last-child { padding-bottom: 0; }
+    .timeline-step::before {
+      content: ''; position: absolute; left: 15px; top: 32px; bottom: 0;
+      width: 2px; background: linear-gradient(180deg, #2563EB, #e2e8f0);
+    }
+    .timeline-step:last-child::before { display: none; }
+    .timeline-dot {
+      position: absolute; left: 4px; top: 4px;
+      width: 24px; height: 24px; border-radius: 50%;
+      background: linear-gradient(135deg, #2563EB, #7C3AED);
+      color: white; font-size: 11px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 3px 10px rgba(37,99,235,0.3);
+    }
+
+    /* Impact counter animation */
+    .impact-number {
+      font-size: 28px; font-weight: 800;
+      background: linear-gradient(135deg, #059669, #10B981);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* Prevent overflow on all cards and containers */
+    .glass-card, .edu-card, .amr-warning-banner { overflow: hidden; word-wrap: break-word; overflow-wrap: break-word; }
+    .max-w-md { max-width: 28rem; overflow-x: hidden; }
+    body { overflow-x: hidden; }
   </style>
 </head>
 <body>
 <div class="mesh-bg"></div>
 
-<!-- ── HEADER ─────────────────────────────────────────────────────────── -->
+<!-- HEADER -->
 <header class="glass-header sticky top-0 z-40 shadow-sm">
-  <div class="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
-    <div class="flex items-center gap-3">
-      <div class="w-10 h-10 rounded-xl grad-main flex items-center justify-center shadow-md">
-        <span class="text-white font-extrabold text-lg leading-none">M</span>
+  <div class="max-w-md mx-auto px-3 py-2.5 flex items-center justify-between gap-2">
+    <div class="flex items-center gap-2 min-w-0 flex-shrink-0">
+      <div class="w-9 h-9 rounded-xl grad-main flex items-center justify-center shadow-md flex-shrink-0">
+        <span class="text-white font-extrabold text-base leading-none">M</span>
       </div>
-      <div>
-        <div class="font-extrabold text-base leading-none" style="color:#0A0F1E" data-i18n="app_name">MedCycle</div>
-        <div class="text-xs text-slate-400 font-medium mt-0.5" data-i18n="tagline">Safe Antibiotic Disposal</div>
+      <div class="min-w-0">
+        <div class="font-extrabold text-sm leading-none" style="color:#0A0F1E" data-i18n="app_name">MedCycle</div>
+        <div class="text-xs text-slate-400 font-medium mt-0.5 truncate" data-i18n="tagline">Safe Medicine Disposal</div>
       </div>
     </div>
-    <div class="flex items-center gap-2">
+    <div class="flex items-center gap-1.5 flex-shrink-0">
       <div class="lang-switcher">
         <button class="lang-btn lang-active" data-lang="en" onclick="setLanguage('en')">EN</button>
-        <button class="lang-btn" data-lang="hi" onclick="setLanguage('hi')">हि</button>
-        <button class="lang-btn" data-lang="mr" onclick="setLanguage('mr')">म</button>
-        <button class="lang-btn" data-lang="ta" onclick="setLanguage('ta')">த</button>
+        <button class="lang-btn" data-lang="hi" onclick="setLanguage('hi')">&#2361;&#2367;</button>
+        <button class="lang-btn" data-lang="mr" onclick="setLanguage('mr')">&#2350;</button>
+        <button class="lang-btn" data-lang="ta" onclick="setLanguage('ta')">&#2980;</button>
       </div>
-      <div id="points-display" class="flex items-center gap-1.5 px-3 py-2 rounded-full cursor-pointer"
-           style="background:linear-gradient(135deg,rgba(245,158,11,0.12),rgba(251,191,36,0.08));border:1.5px solid rgba(245,158,11,0.25)"
-           onclick="showTab('rewards')">
-        <span class="text-yellow-400 text-sm">★</span>
-        <span id="header-points" class="font-bold text-sm" style="color:#92400E">0 pts</span>
+      <div id="points-display" class="flex items-center gap-1 px-2 py-1.5 rounded-full cursor-pointer"
+           style="background:linear-gradient(135deg,rgba(16,185,129,0.12),rgba(5,150,105,0.08));border:1.5px solid rgba(16,185,129,0.25)"
+           onclick="showTab('impact')">
+        <span class="text-xs" style="color:#059669">&#9825;</span>
+        <span id="header-points" class="font-bold text-xs whitespace-nowrap" style="color:#065F46">0</span>
       </div>
     </div>
   </div>
 </header>
 
-<!-- ── CONTENT AREA ────────────────────────────────────────────────────── -->
+<!-- CONTENT AREA -->
 <div class="max-w-md mx-auto px-4 pt-4 pb-28 relative z-10 space-y-4">
 
   <!-- ══ HOME TAB ══════════════════════════════════════════════════════ -->
   <div id="tab-content-home" class="space-y-4 slide-up">
 
-    <!-- Hero Card -->
-    <div class="grad-main rounded-[24px] p-5 text-white shadow-xl relative overflow-hidden float-card">
+    <!-- SECTION 1: Hero Banner — Awareness First -->
+    <div class="rounded-[24px] p-6 text-white shadow-xl relative overflow-hidden float-card" style="background:linear-gradient(135deg, #0F766E 0%, #059669 40%, #10B981 100%);">
       <div class="absolute -top-8 -right-8 w-32 h-32 rounded-full opacity-10" style="background:white"></div>
       <div class="absolute -bottom-6 -left-6 w-24 h-24 rounded-full opacity-10" style="background:white"></div>
-      <div class="relative flex justify-between items-start">
-        <div class="flex-1">
-          <div class="text-xs font-semibold uppercase tracking-widest opacity-70 mb-2" data-i18n="hero_badge">MedCycle · India</div>
-          <h1 class="text-xl font-extrabold leading-snug" data-i18n="hero_title">Dispose Safely. Fight AMR. Earn Rewards.</h1>
-          <p class="text-blue-100 text-xs mt-2 leading-relaxed" data-i18n="hero_body">Every antibiotic you safely dispose protects your community.</p>
+      <div class="relative">
+        <div class="flex items-start justify-between">
+          <div class="flex-1">
+            <div class="flex items-center gap-2 mb-3">
+              <span class="w-2 h-2 rounded-full pulse-dot" style="background:#34D399;display:inline-block"></span>
+              <span class="text-xs font-semibold uppercase tracking-widest opacity-80" data-i18n="hero_badge_text">Public Health Initiative</span>
+            </div>
+            <h1 class="text-xl font-extrabold leading-snug" data-i18n="hero_title">Dispose medicines safely, help reduce antimicrobial resistance.</h1>
+            <p class="text-emerald-100 text-xs mt-2.5 leading-relaxed" data-i18n="hero_body">Every safe medicine return contributes to healthier communities and safer antibiotic use.</p>
+          </div>
+          <div class="text-4xl ml-3 mt-1 opacity-90">&#x1F3E5;</div>
         </div>
-        <div class="text-5xl ml-4">💊</div>
-      </div>
-      <button onclick="showTab('dispose')"
-        class="mt-4 w-full py-3 rounded-[14px] text-sm font-bold transition-all"
-        style="background:rgba(255,255,255,0.2);backdrop-filter:blur(8px);border:1.5px solid rgba(255,255,255,0.4);color:white">
-        <span class="mr-1">🚀</span><span data-i18n="hero_btn">Start Disposal →</span>
-      </button>
-    </div>
-
-    <!-- Stats Row -->
-    <div class="grid grid-cols-3 gap-3">
-      <div class="glass-card p-3 text-center" style="background:linear-gradient(135deg,rgba(37,99,235,0.08),rgba(37,99,235,0.03))">
-        <div class="text-2xl font-extrabold" style="background:linear-gradient(135deg,#2563EB,#0EA5E9);-webkit-background-clip:text;-webkit-text-fill-color:transparent" id="stat-disposals">—</div>
-        <div class="text-xs text-slate-500 mt-0.5 font-medium" data-i18n="stat_disposals">Disposals</div>
-      </div>
-      <div class="glass-card p-3 text-center" style="background:linear-gradient(135deg,rgba(16,185,129,0.08),rgba(16,185,129,0.03))">
-        <div class="text-2xl font-extrabold" style="background:linear-gradient(135deg,#10B981,#059669);-webkit-background-clip:text;-webkit-text-fill-color:transparent" id="stat-points">—</div>
-        <div class="text-xs text-slate-500 mt-0.5 font-medium" data-i18n="stat_points">Points</div>
-      </div>
-      <div class="glass-card p-3 text-center" style="background:linear-gradient(135deg,rgba(124,58,237,0.08),rgba(124,58,237,0.03))">
-        <div class="text-2xl font-extrabold" style="background:linear-gradient(135deg,#7C3AED,#A855F7);-webkit-background-clip:text;-webkit-text-fill-color:transparent" id="stat-badges">—</div>
-        <div class="text-xs text-slate-500 mt-0.5 font-medium" data-i18n="stat_badges">Badges</div>
-      </div>
-    </div>
-
-    <!-- AMR Awareness Card -->
-    <div class="glass-card p-4" style="border-left:4px solid #EF4444">
-      <div class="flex gap-3 items-start">
-        <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-lg" style="background:rgba(239,68,68,0.1)">⚠️</div>
-        <div>
-          <div class="font-bold text-sm" style="color:#0A0F1E" data-i18n="amr_title">Why This Matters</div>
-          <p class="text-slate-500 text-xs mt-1 leading-relaxed" data-i18n-html="amr_body">AMR kills <strong class="text-red-600">1.27 million people/year</strong> globally. Flushing antibiotics contaminates water and accelerates resistance. Safe disposal starts with you.</p>
+        <div class="flex flex-col gap-2 mt-4">
+          <button onclick="showTab('dispose')"
+            class="w-full py-3 rounded-[14px] text-sm font-bold transition-all"
+            style="background:rgba(255,255,255,0.25);backdrop-filter:blur(8px);border:1.5px solid rgba(255,255,255,0.4);color:white">
+            <span data-i18n="hero_btn">Start Disposal</span> &#8594;
+          </button>
+          <button onclick="document.getElementById('section-how-it-works').scrollIntoView({behavior:'smooth'})"
+            class="w-full py-2.5 rounded-[14px] text-xs font-semibold transition-all"
+            style="background:rgba(255,255,255,0.12);border:1.5px solid rgba(255,255,255,0.25);color:rgba(255,255,255,0.9)">
+            <span data-i18n="hero_how_it_works">How It Works</span>
+          </button>
         </div>
       </div>
     </div>
 
-    <!-- Quick Actions 2×2 -->
+    <!-- SECTION 2: Quick Actions -->
     <div class="grid grid-cols-2 gap-3">
-      <button onclick="showTab('dispose')" class="glass-card p-4 text-left hover:scale-[1.02] transition-all group">
-        <div class="w-10 h-10 rounded-xl mb-3 flex items-center justify-center text-xl" style="background:linear-gradient(135deg,rgba(37,99,235,0.15),rgba(14,165,233,0.1))">📦</div>
-        <div class="font-bold text-sm" style="color:#0A0F1E" data-i18n="qa_dispose">Dispose Medicine</div>
-        <div class="text-xs text-slate-400 mt-0.5" data-i18n="qa_dispose_sub">Get QR code + earn points</div>
+      <button onclick="showTab('dispose')" class="glass-card p-4 text-center hover:shadow-lg transition-all">
+        <div class="w-12 h-12 rounded-2xl mx-auto mb-2.5 flex items-center justify-center text-2xl" style="background:rgba(37,99,235,0.08)">&#x1F48A;</div>
+        <div class="font-bold text-[13px]" style="color:#0A0F1E" data-i18n="dispose_medicines">Dispose Medicines</div>
+        <div class="text-[11px] text-slate-400 mt-1" data-i18n="dispose_medicines_sub">Get QR for safe return</div>
       </button>
-      <button onclick="showTab('map')" class="glass-card p-4 text-left hover:scale-[1.02] transition-all group">
-        <div class="w-10 h-10 rounded-xl mb-3 flex items-center justify-center text-xl" style="background:linear-gradient(135deg,rgba(16,185,129,0.15),rgba(5,150,105,0.1))">📍</div>
-        <div class="font-bold text-sm" style="color:#0A0F1E" data-i18n="qa_map">Find Drop-off</div>
-        <div class="text-xs text-slate-400 mt-0.5" data-i18n="qa_map_sub">Nearest pharmacy</div>
+      <button onclick="showTab('map')" class="glass-card p-4 text-center hover:shadow-lg transition-all">
+        <div class="w-12 h-12 rounded-2xl mx-auto mb-2.5 flex items-center justify-center text-2xl" style="background:rgba(16,185,129,0.08)">&#x1F4CD;</div>
+        <div class="font-bold text-[13px]" style="color:#0A0F1E" data-i18n="find_pharmacy">Find Pharmacy</div>
+        <div class="text-[11px] text-slate-400 mt-1" data-i18n="find_pharmacy_sub">Nearest return point</div>
       </button>
-      <button onclick="showHomeguide()" class="glass-card p-4 text-left hover:scale-[1.02] transition-all group">
-        <div class="w-10 h-10 rounded-xl mb-3 flex items-center justify-center text-xl" style="background:linear-gradient(135deg,rgba(245,158,11,0.15),rgba(217,119,6,0.1))">🏠</div>
-        <div class="font-bold text-sm" style="color:#0A0F1E" data-i18n="qa_home">Home Disposal</div>
-        <div class="text-xs text-slate-400 mt-0.5" data-i18n="qa_home_sub">Step-by-step guide</div>
+      <button onclick="showTab('doses')" class="glass-card p-4 text-center hover:shadow-lg transition-all">
+        <div class="w-12 h-12 rounded-2xl mx-auto mb-2.5 flex items-center justify-center text-2xl" style="background:rgba(245,158,11,0.08)">&#x1F4CB;</div>
+        <div class="font-bold text-[13px]" style="color:#0A0F1E" data-i18n="track_medication">Track Medication</div>
+        <div class="text-[11px] text-slate-400 mt-1" data-i18n="track_medication_sub">Daily dose tracker</div>
       </button>
-      <button onclick="showTab('chat')" class="glass-card p-4 text-left hover:scale-[1.02] transition-all group">
-        <div class="w-10 h-10 rounded-xl mb-3 flex items-center justify-center text-xl" style="background:linear-gradient(135deg,rgba(124,58,237,0.15),rgba(139,92,246,0.1))">🤖</div>
-        <div class="font-bold text-sm" style="color:#0A0F1E" data-i18n="qa_bot">Ask MedBot</div>
-        <div class="text-xs text-slate-400 mt-0.5" data-i18n="qa_bot_sub">AI awareness assistant</div>
+      <button onclick="showTab('chat')" class="glass-card p-4 text-center hover:shadow-lg transition-all">
+        <div class="w-12 h-12 rounded-2xl mx-auto mb-2.5 flex items-center justify-center text-2xl" style="background:rgba(124,58,237,0.08)">&#x1F916;</div>
+        <div class="font-bold text-[13px]" style="color:#0A0F1E" data-i18n="ask_medbot">Ask MedBot</div>
+        <div class="text-[11px] text-slate-400 mt-1" data-i18n="ask_medbot_sub">AI health assistant</div>
       </button>
     </div>
 
-    <!-- Recent Activity -->
+    <!-- SECTION 3: Community Impact Card -->
+    <div class="glass-card p-5" style="border-left:4px solid #10B981">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-11 h-11 rounded-xl flex items-center justify-center text-xl flex-shrink-0" style="background:linear-gradient(135deg,rgba(16,185,129,0.15),rgba(5,150,105,0.08))">&#x1F30D;</div>
+        <div>
+          <div class="font-extrabold text-sm" style="color:#0A0F1E" data-i18n="impact_card_title">Community Health Impact</div>
+          <div class="text-xs text-slate-400 mt-0.5" data-i18n="impact_card_subtitle">Your actions protect public health</div>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div class="p-3 rounded-[16px] text-center overflow-hidden" style="background:linear-gradient(135deg,rgba(16,185,129,0.08),rgba(5,150,105,0.03));border:1.5px solid rgba(16,185,129,0.15)">
+          <div class="impact-number" id="stat-disposals">0</div>
+          <div class="text-[10px] text-slate-500 font-semibold mt-1 leading-tight" data-i18n="impact_card_returned">Medicines Safely Returned</div>
+        </div>
+        <div class="p-3 rounded-[16px] text-center overflow-hidden" style="background:linear-gradient(135deg,rgba(239,68,68,0.06),rgba(239,68,68,0.02));border:1.5px solid rgba(239,68,68,0.12)">
+          <div class="text-2xl font-extrabold" style="background:linear-gradient(135deg,#DC2626,#EF4444);-webkit-background-clip:text;-webkit-text-fill-color:transparent" id="stat-antibiotics">0</div>
+          <div class="text-[10px] text-slate-500 font-semibold mt-1 leading-tight" data-i18n="impact_card_antibiotics">Antibiotics Safely Disposed</div>
+        </div>
+        <div class="p-3 rounded-[16px] text-center overflow-hidden" style="background:linear-gradient(135deg,rgba(37,99,235,0.06),rgba(37,99,235,0.02));border:1.5px solid rgba(37,99,235,0.12)">
+          <div class="text-2xl font-extrabold" style="background:linear-gradient(135deg,#2563EB,#0EA5E9);-webkit-background-clip:text;-webkit-text-fill-color:transparent" id="stat-community">0</div>
+          <div class="text-[10px] text-slate-500 font-semibold mt-1 leading-tight" data-i18n="impact_card_members">Community Members Active</div>
+        </div>
+        <div class="p-3 rounded-[16px] text-center overflow-hidden" style="background:linear-gradient(135deg,rgba(124,58,237,0.06),rgba(124,58,237,0.02));border:1.5px solid rgba(124,58,237,0.12)">
+          <div class="text-2xl font-extrabold" style="background:linear-gradient(135deg,#7C3AED,#A855F7);-webkit-background-clip:text;-webkit-text-fill-color:transparent" id="stat-env-impact">0</div>
+          <div class="text-[10px] text-slate-500 font-semibold mt-1 leading-tight" data-i18n="impact_card_env">Environmental Risks Prevented</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 4: Disposal Education Strip -->
+    <div>
+      <div class="flex items-center justify-between mb-3 px-1 gap-2">
+        <div class="font-extrabold text-sm min-w-0" style="color:#0A0F1E" data-i18n="edu_section_title">Understanding Safe Disposal</div>
+        <button onclick="showTab('chat')" class="text-xs font-semibold whitespace-nowrap flex-shrink-0" style="color:#2563EB" data-i18n="edu_learn_more">Learn More &#8594;</button>
+      </div>
+      <div class="space-y-3">
+        <div class="edu-card">
+          <div class="flex gap-3 items-start">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0" style="background:rgba(239,68,68,0.08)">&#9888;&#65039;</div>
+            <div>
+              <div class="font-bold text-sm" style="color:#0A0F1E" data-i18n="edu_antibiotic_title">Why Antibiotics Need Special Handling</div>
+              <p class="text-xs text-slate-500 mt-1 leading-relaxed" data-i18n-html="edu_antibiotic_desc">Antibiotics in water and soil accelerate antimicrobial resistance, which kills <strong class="text-red-600">1.27 million people per year</strong> globally. Never flush or throw antibiotics in regular waste.</p>
+            </div>
+          </div>
+        </div>
+        <div class="edu-card">
+          <div class="flex gap-3 items-start">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0" style="background:rgba(37,99,235,0.08)">&#x1F4A7;</div>
+            <div>
+              <div class="font-bold text-sm" style="color:#0A0F1E" data-i18n="edu_risks_title">Risks of Improper Disposal</div>
+              <p class="text-xs text-slate-500 mt-1 leading-relaxed" data-i18n="edu_risks_desc">Medicines flushed down drains contaminate water supplies. Bacteria exposed to low antibiotic levels develop resistance, making infections harder to treat.</p>
+            </div>
+          </div>
+        </div>
+        <div class="edu-card">
+          <div class="flex gap-3 items-start">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0" style="background:rgba(16,185,129,0.08)">&#x1F3E5;</div>
+            <div>
+              <div class="font-bold text-sm" style="color:#0A0F1E" data-i18n="edu_pharmacy_title">Why Pharmacy Return Programs Matter</div>
+              <p class="text-xs text-slate-500 mt-1 leading-relaxed" data-i18n="edu_pharmacy_desc">Pharmacy take-back programs ensure medicines are disposed through regulated incineration. This prevents environmental contamination and protects community health.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 5: Community Health Milestones (previously Rewards) -->
+    <div class="glass-card p-4">
+      <div class="flex items-center gap-3 mb-3">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0" style="background:linear-gradient(135deg,rgba(124,58,237,0.12),rgba(139,92,246,0.08))">&#x1F3AF;</div>
+        <div>
+          <div class="font-extrabold text-sm" style="color:#0A0F1E" data-i18n="milestone_title">Safe Disposal Milestones</div>
+          <div class="text-xs text-slate-400 mt-0.5" data-i18n="milestone_subtitle">Your contribution journey</div>
+        </div>
+      </div>
+      <div class="grid grid-cols-3 gap-2">
+        <div class="p-2.5 rounded-[14px] text-center overflow-hidden" style="background:rgba(37,99,235,0.05)">
+          <div class="text-lg font-extrabold" style="color:#2563EB" id="home-safe-returns">0</div>
+          <div class="text-[10px] text-slate-400 mt-0.5 font-medium leading-tight" data-i18n="milestone_verified_returns">Verified Returns</div>
+        </div>
+        <div class="p-2.5 rounded-[14px] text-center overflow-hidden" style="background:rgba(16,185,129,0.05)">
+          <div class="text-lg font-extrabold" style="color:#059669" id="home-contribution">0</div>
+          <div class="text-[10px] text-slate-400 mt-0.5 font-medium leading-tight" data-i18n="milestone_contribution_score">Contribution Score</div>
+        </div>
+        <div class="p-2.5 rounded-[14px] text-center overflow-hidden" style="background:rgba(124,58,237,0.05)">
+          <div class="text-lg font-extrabold" style="color:#7C3AED" id="home-milestones">0</div>
+          <div class="text-[10px] text-slate-400 mt-0.5 font-medium leading-tight" data-i18n="milestone_milestones">Milestones</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 5.5: How It Works (Next Steps Guidance) -->
+    <div class="glass-card p-5" id="section-how-it-works">
+      <div class="font-extrabold text-sm mb-4" style="color:#0A0F1E" data-i18n="steps_title">How Safe Disposal Works</div>
+      <div>
+        <div class="timeline-step">
+          <div class="timeline-dot">1</div>
+          <div class="font-bold text-sm" style="color:#0A0F1E" data-i18n="steps_1_title">Scan or Enter Medicine Details</div>
+          <p class="text-xs text-slate-400 mt-1 leading-relaxed" data-i18n="steps_1_desc">Use the barcode scanner or manually enter your medicine name and category.</p>
+        </div>
+        <div class="timeline-step">
+          <div class="timeline-dot">2</div>
+          <div class="font-bold text-sm" style="color:#0A0F1E" data-i18n="steps_2_title">Generate Disposal QR Code</div>
+          <p class="text-xs text-slate-400 mt-1 leading-relaxed" data-i18n="steps_2_desc">We create a unique QR code linked to your medicine for secure verification.</p>
+        </div>
+        <div class="timeline-step">
+          <div class="timeline-dot">3</div>
+          <div class="font-bold text-sm" style="color:#0A0F1E" data-i18n="steps_3_title">Visit a Pharmacy Return Point</div>
+          <p class="text-xs text-slate-400 mt-1 leading-relaxed" data-i18n="steps_3_desc">Find the nearest verified pharmacy and bring your medicine with the QR code.</p>
+        </div>
+        <div class="timeline-step">
+          <div class="timeline-dot">4</div>
+          <div class="font-bold text-sm" style="color:#0A0F1E" data-i18n="steps_4_title">Pharmacist Verifies the Return</div>
+          <p class="text-xs text-slate-400 mt-1 leading-relaxed" data-i18n="steps_4_desc">The pharmacist scans your QR code to confirm safe collection of the medicine.</p>
+        </div>
+        <div class="timeline-step">
+          <div class="timeline-dot" style="background:linear-gradient(135deg,#059669,#10B981)">&#10003;</div>
+          <div class="font-bold text-sm" style="color:#0A0F1E" data-i18n="steps_5_title">Earn Community Contribution Impact</div>
+          <p class="text-xs text-slate-400 mt-1 leading-relaxed" data-i18n="steps_5_desc">Your safe return is logged. You earn contribution points and help protect public health.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 6: Recent Activity -->
     <div class="glass-card p-4">
       <div class="flex justify-between items-center mb-4">
         <div class="font-bold text-sm" style="color:#0A0F1E" data-i18n="recent_title">Recent Activity</div>
-        <span class="text-xs font-semibold cursor-pointer" style="color:#2563EB" onclick="loadHistory()" data-i18n="recent_view_all">View all →</span>
+        <span class="text-xs font-semibold cursor-pointer" style="color:#2563EB" onclick="loadHistory()" data-i18n="recent_view_all">View all &#8594;</span>
       </div>
       <div id="recent-disposals">
         <div class="text-center py-8 text-slate-400 text-sm">
-          <div class="text-3xl mb-2 opacity-50">📋</div>
+          <div class="text-3xl mb-2 opacity-50">&#x1F3E5;</div>
           <div class="font-medium" data-i18n="recent_empty">No disposals yet.</div>
-          <div class="text-xs mt-1" data-i18n="recent_start">Start your first one!</div>
+          <div class="text-xs mt-1" data-i18n="recent_start">Start your first safe medicine return!</div>
         </div>
       </div>
     </div>
@@ -328,40 +463,43 @@
       </div>
     </div>
 
-    <!-- Step 1: Medicine Details -->
+    <!-- Step 1: Medicine Details (Redesigned with Categories) -->
     <div id="disposal-step1" class="glass-card p-5 space-y-4">
       <div>
         <h2 class="font-extrabold text-lg" style="color:#0A0F1E" data-i18n="disp_title">Medicine Details</h2>
-        <p class="text-xs text-slate-400 mt-0.5" data-i18n="disp_sub">Fill in your antibiotic information below</p>
+        <p class="text-xs text-slate-400 mt-0.5" data-i18n="disp_subtitle">Enter your medicine information for safe disposal</p>
       </div>
 
+      <!-- Medicine Name + Scanner -->
       <div>
         <label class="inp-label" data-i18n="disp_med_lbl">Medicine Name *</label>
         <div class="flex gap-2">
-          <input id="med-name" type="text" placeholder="e.g. Amoxicillin 500mg" data-i18n-placeholder="disp_med_ph" class="inp flex-1" />
+          <input id="med-name" type="text" placeholder="e.g. Amoxicillin 500mg, Paracetamol" data-i18n-placeholder="disp_med_ph" class="inp flex-1" />
           <button onclick="toggleScanner()" class="px-4 py-3 rounded-xl text-sm font-semibold flex-shrink-0 transition-all"
-            style="background:rgba(37,99,235,0.08);border:1.5px solid rgba(37,99,235,0.2);color:#2563EB">📷</button>
+            style="background:rgba(37,99,235,0.08);border:1.5px solid rgba(37,99,235,0.2);color:#2563EB" title="Scan barcode">&#x1F4F7;</button>
         </div>
-        <p id="scan-status" class="text-xs text-slate-400 mt-1.5 hidden" data-i18n="scan_status">Scanning… enter barcode manually below</p>
+        <p id="scan-status" class="text-xs text-slate-400 mt-1.5 hidden" data-i18n="disp_scan_status">Scanning... enter barcode manually below</p>
       </div>
 
+      <!-- Barcode -->
       <div>
-        <label class="inp-label" data-i18n="disp_barcode_lbl">Barcode (optional)</label>
+        <label class="inp-label" data-i18n="disp_barcode_lbl">Barcode / Label Code (optional)</label>
         <input id="med-barcode" type="text" placeholder="Scan or type barcode" data-i18n-placeholder="disp_barcode_ph" class="inp" />
       </div>
 
+      <!-- Medicine Category + Quantity -->
       <div class="grid grid-cols-2 gap-3">
         <div>
-          <label class="inp-label" data-i18n="disp_type_lbl">Antibiotic Type</label>
-          <select id="med-class" class="inp" style="appearance:none">
-            <option value="" data-i18n="disp_type_ph">Select type</option>
-            <option value="penicillin">Penicillin</option>
-            <option value="cephalosporin">Cephalosporin</option>
-            <option value="macrolide">Macrolide</option>
-            <option value="fluoroquinolone">Fluoroquinolone ⚠️</option>
-            <option value="tetracycline">Tetracycline</option>
-            <option value="aminoglycoside">Aminoglycoside</option>
-            <option value="other">Other</option>
+          <label class="inp-label" data-i18n="disp_cat_lbl">Medicine Category *</label>
+          <select id="med-category" class="inp" style="appearance:none" onchange="onCategoryChange()">
+            <option value="">Select category</option>
+            <option value="antibiotic">Antibiotic</option>
+            <option value="pain_relief">Pain Relief</option>
+            <option value="cold_flu">Cold & Flu</option>
+            <option value="diabetic">Diabetic</option>
+            <option value="cardiac">Cardiac</option>
+            <option value="supplements">Supplements</option>
+            <option value="others">Others</option>
           </select>
         </div>
         <div>
@@ -370,41 +508,116 @@
         </div>
       </div>
 
+      <!-- CONDITIONAL: Antibiotic-specific Section -->
+      <div id="antibiotic-section" class="hidden space-y-4">
+
+        <!-- AMR Risk Warning -->
+        <div class="amr-warning-banner">
+          <div class="flex gap-3 items-start">
+            <span class="text-2xl flex-shrink-0">&#9888;&#65039;</span>
+            <div>
+              <div class="font-bold text-sm" style="color:#991B1B" data-i18n="disp_amr_warning_title">Antimicrobial Resistance Risk</div>
+              <p class="text-xs mt-1 leading-relaxed" style="color:#B91C1C" data-i18n="disp_amr_warning_desc">This medicine belongs to the antibiotic category, which is linked with antimicrobial resistance when improperly disposed. Special handling is required.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Antibiotic Class Selection -->
+        <div>
+          <label class="inp-label" data-i18n="disp_antibiotic_class_lbl">Antibiotic Class</label>
+          <select id="med-class" class="inp" style="appearance:none">
+            <option value="">Select antibiotic class</option>
+            <option value="penicillin">Penicillin</option>
+            <option value="cephalosporin">Cephalosporin</option>
+            <option value="macrolide">Macrolide</option>
+            <option value="fluoroquinolone">Fluoroquinolone</option>
+            <option value="tetracycline">Tetracycline</option>
+            <option value="aminoglycoside">Aminoglycoside</option>
+            <option value="sulfonamide">Sulfonamide</option>
+            <option value="carbapenem">Carbapenem</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+
+        <!-- Disposal Guidelines -->
+        <div class="p-4 rounded-[16px]" style="background:rgba(37,99,235,0.05);border:1.5px solid rgba(37,99,235,0.15)">
+          <div class="font-bold text-sm mb-2" style="color:#1E40AF" data-i18n="disp_guidelines_title">Antibiotic Disposal Guidelines</div>
+          <ol class="text-xs space-y-1.5 list-decimal list-inside" style="color:#475569">
+            <li data-i18n="disp_guideline_1">Do not flush antibiotics down the toilet or sink.</li>
+            <li data-i18n="disp_guideline_2">Do not throw antibiotics in household dustbins.</li>
+            <li data-i18n="disp_guideline_3">Keep in original packaging until return.</li>
+            <li data-i18n="disp_guideline_4">Return to a verified pharmacy take-back point.</li>
+            <li data-i18n="disp_guideline_5">If expired, inform the pharmacist during return.</li>
+          </ol>
+        </div>
+
+        <!-- Incomplete Course Warning -->
+        <div class="p-4 rounded-[16px]" style="background:rgba(245,158,11,0.06);border:1.5px solid rgba(245,158,11,0.2)">
+          <div class="flex gap-3 items-start">
+            <span class="text-lg flex-shrink-0">&#x1F4A1;</span>
+            <div>
+              <div class="font-bold text-sm" style="color:#92400E" data-i18n="disp_incomplete_title">Unfinished Antibiotic Course?</div>
+              <p class="text-xs mt-1 leading-relaxed" style="color:#B45309" data-i18n="disp_incomplete_desc">Incomplete antibiotic courses can contribute to antimicrobial resistance. If you have leftover antibiotics, do not save them for later use. Return them safely to a pharmacy.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Priority Return Recommendation -->
+        <div class="p-4 rounded-[16px]" style="background:linear-gradient(135deg,rgba(16,185,129,0.08),rgba(5,150,105,0.04));border:1.5px solid rgba(16,185,129,0.2)">
+          <div class="flex gap-3 items-start">
+            <span class="text-lg flex-shrink-0">&#x1F3E5;</span>
+            <div>
+              <div class="font-bold text-sm" style="color:#065F46" data-i18n="disp_priority_title">Highly Recommended: Pharmacy Take-Back</div>
+              <p class="text-xs mt-1 leading-relaxed" style="color:#047857" data-i18n="disp_priority_desc">For antibiotics, we strongly recommend returning to a pharmacy take-back program. This ensures proper regulated disposal and prevents environmental contamination.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Expiry Date -->
       <div>
         <label class="inp-label" data-i18n="disp_expiry_lbl">Expiry Date</label>
         <input id="med-expiry" type="date" class="inp" />
       </div>
 
-      <!-- Toggle checkbox -->
+      <!-- Home Disposal Toggle -->
       <div class="flex items-center gap-3 p-4 rounded-[16px]" style="background:rgba(245,158,11,0.07);border:1.5px solid rgba(245,158,11,0.2)">
         <label class="relative inline-flex items-center cursor-pointer">
           <input id="home-disposal" type="checkbox" class="sr-only peer" />
           <div class="w-10 h-5 rounded-full peer-checked:after:translate-x-5 after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all after:shadow"
                style="background:#e2e8f0;" id="toggle-bg"></div>
         </label>
-        <script>
-          document.getElementById('home-disposal').addEventListener('change', function(){
-            document.getElementById('toggle-bg').style.background = this.checked ? '#F59E0B' : '#e2e8f0';
-          });
-        </script>
         <div>
           <label for="home-disposal" class="text-sm font-bold" style="color:#92400E" data-i18n="disp_home_lbl">Home Disposal</label>
-          <p class="text-xs mt-0.5" style="color:#B45309" data-i18n="disp_home_sub">No pharmacy nearby? Dispose safely at home.</p>
+          <p class="text-xs mt-0.5" style="color:#B45309" data-i18n="disp_home_desc">No pharmacy nearby? Follow our safe home disposal guide.</p>
+        </div>
+      </div>
+      <script>
+        document.getElementById('home-disposal').addEventListener('change', function(){
+          document.getElementById('toggle-bg').style.background = this.checked ? '#F59E0B' : '#e2e8f0';
+        });
+      </script>
+
+      <!-- Standard pharmacy return recommendation (for non-antibiotics) -->
+      <div id="standard-return-note" class="hidden p-3 rounded-[14px]" style="background:rgba(16,185,129,0.05);border:1.5px solid rgba(16,185,129,0.12)">
+        <div class="flex gap-2 items-center">
+          <span class="text-sm">&#x1F3E5;</span>
+          <p class="text-xs" style="color:#047857" data-i18n-html="disp_standard_note"><strong>Recommended:</strong> Return to a pharmacy take-back program for safe disposal.</p>
         </div>
       </div>
 
       <button onclick="initiateDisposal()" class="btn-primary">
         <span class="shimmer"></span>
-        <span data-i18n="disp_btn">🔐 Generate QR Code →</span>
+        <span data-i18n="disp_btn">Generate Disposal QR Code &#8594;</span>
       </button>
     </div>
 
     <!-- Step 2: QR Code -->
     <div id="disposal-step2" class="hidden space-y-4">
       <div class="glass-card p-5 text-center">
-        <div class="w-14 h-14 rounded-2xl mx-auto mb-3 flex items-center justify-center text-2xl" style="background:linear-gradient(135deg,rgba(16,185,129,0.15),rgba(5,150,105,0.1))">✅</div>
+        <div class="w-14 h-14 rounded-2xl mx-auto mb-3 flex items-center justify-center text-2xl" style="background:linear-gradient(135deg,rgba(16,185,129,0.15),rgba(5,150,105,0.1))">&#10004;</div>
         <h2 class="font-extrabold text-lg" style="color:#0A0F1E" data-i18n="qr_title">Your Disposal QR Code</h2>
-        <p class="text-sm text-slate-500 mt-1 leading-relaxed" data-i18n="qr_sub">Show this QR at the pharmacy drop-off counter. They'll scan it to confirm your disposal.</p>
+        <p class="text-sm text-slate-500 mt-1 leading-relaxed" data-i18n="qr_subtitle">Show this QR at the pharmacy return counter. The pharmacist will scan it to verify your safe medicine return.</p>
 
         <div class="qr-gradient-border mx-auto mt-4 inline-block">
           <div class="qr-inner">
@@ -415,28 +628,39 @@
 
         <div class="grid grid-cols-2 gap-3 mt-4">
           <div class="p-3 rounded-[14px] text-left" style="background:linear-gradient(135deg,rgba(37,99,235,0.07),rgba(37,99,235,0.03))">
-            <div class="text-xs text-slate-400 font-medium" data-i18n="qr_med_lbl">Medicine</div>
-            <div class="font-bold text-sm mt-0.5" style="color:#0A0F1E" id="qr-med-name">—</div>
+            <div class="text-xs text-slate-400 font-medium" data-i18n="qr_medicine_label">Medicine</div>
+            <div class="font-bold text-sm mt-0.5" style="color:#0A0F1E" id="qr-med-name">&#8212;</div>
           </div>
           <div class="p-3 rounded-[14px] text-left" style="background:linear-gradient(135deg,rgba(16,185,129,0.07),rgba(16,185,129,0.03))">
-            <div class="text-xs text-slate-400 font-medium" data-i18n="qr_pts_lbl">Points Preview</div>
-            <div class="font-bold text-sm mt-0.5" style="color:#059669" id="qr-points">+10 pts</div>
+            <div class="text-xs text-slate-400 font-medium" data-i18n="qr_category_label">Category</div>
+            <div class="font-bold text-sm mt-0.5" style="color:#059669" id="qr-category">&#8212;</div>
+          </div>
+        </div>
+
+        <!-- Next Steps after QR -->
+        <div class="mt-4 p-4 rounded-[16px] text-left" style="background:rgba(37,99,235,0.04);border:1.5px solid rgba(37,99,235,0.1)">
+          <div class="font-bold text-sm mb-2" style="color:#1E40AF" data-i18n="qr_next_title">What to do next</div>
+          <div class="space-y-2 text-xs" style="color:#475569">
+            <div class="flex gap-2"><span class="font-bold" style="color:#2563EB">1.</span> <span data-i18n="qr_next_step1">Save or screenshot this QR code</span></div>
+            <div class="flex gap-2"><span class="font-bold" style="color:#2563EB">2.</span> <span data-i18n="qr_next_step2">Find the nearest pharmacy return point</span></div>
+            <div class="flex gap-2"><span class="font-bold" style="color:#2563EB">3.</span> <span data-i18n="qr_next_step3">Show QR to the pharmacist for verification</span></div>
+            <div class="flex gap-2"><span class="font-bold" style="color:#2563EB">4.</span> <span data-i18n="qr_next_step4">Your safe return is confirmed and logged</span></div>
           </div>
         </div>
 
         <div id="home-disposal-guide" class="hidden mt-4">
           <div class="p-4 rounded-[16px] text-left" style="background:rgba(245,158,11,0.07);border:1.5px solid rgba(245,158,11,0.2)">
-            <div class="font-bold text-sm mb-2" style="color:#92400E" data-i18n="qr_home_steps">🏠 Home Disposal Steps</div>
+            <div class="font-bold text-sm mb-2" style="color:#92400E" data-i18n="qr_home_steps_title">Home Disposal Steps</div>
             <ol id="home-guide-steps" class="text-xs space-y-1 list-decimal list-inside" style="color:#B45309"></ol>
           </div>
         </div>
 
         <button onclick="showTab('map')" class="mt-4 w-full py-3 rounded-[14px] text-sm font-bold transition-all"
           style="background:rgba(37,99,235,0.08);border:1.5px solid rgba(37,99,235,0.2);color:#2563EB">
-          <span data-i18n="qr_find_btn">📍 Find Nearest Pharmacy</span>
+          <span data-i18n="qr_find_pharmacy">&#x1F4CD; Find Nearest Pharmacy Return Point</span>
         </button>
-        <button onclick="resetDisposal()" class="mt-2 w-full text-slate-400 text-sm py-2 font-medium" data-i18n="qr_another_btn">
-          Dispose another medicine
+        <button onclick="resetDisposal()" class="mt-2 w-full text-slate-400 text-sm py-2 font-medium">
+          <span data-i18n="qr_dispose_another">Dispose another medicine</span>
         </button>
       </div>
     </div>
@@ -447,17 +671,17 @@
     <div class="glass-card p-4">
       <div class="flex justify-between items-center mb-3">
         <div>
-          <h2 class="font-extrabold text-base" style="color:#0A0F1E" data-i18n="map_title">Nearby Drop-off Points</h2>
-          <p class="text-xs text-slate-400 font-medium mt-0.5" data-i18n="map_sub">Verified MedCycle collection pharmacies</p>
+          <h2 class="font-extrabold text-base" style="color:#0A0F1E" data-i18n="map_title">Nearby Return Points</h2>
+          <p class="text-xs text-slate-400 font-medium mt-0.5" data-i18n="map_subtitle">Verified MedCycle pharmacy collection points</p>
         </div>
         <button onclick="locateMe()" class="px-3 py-2 rounded-[12px] text-xs font-bold transition-all flex-shrink-0"
           style="background:rgba(37,99,235,0.08);border:1.5px solid rgba(37,99,235,0.2);color:#2563EB" data-i18n="map_locate_btn">
-          📍 Locate Me
+          &#x1F4CD; Locate Me
         </button>
       </div>
       <div id="citizen-map" class="rounded-[16px] overflow-hidden mb-3" style="box-shadow:0 8px 32px rgba(37,99,235,0.12)"></div>
       <div class="relative">
-        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">🔍</span>
+        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">&#x1F50D;</span>
         <input id="map-search" type="text" placeholder="Search by city or area..."
           data-i18n-placeholder="map_search_placeholder"
           class="inp pl-9" oninput="filterPharmacies()" />
@@ -465,20 +689,19 @@
     </div>
     <div id="pharmacy-list" class="space-y-3">
       <div class="glass-card text-center py-10 text-slate-400 text-sm">
-        <div class="text-3xl mb-2">📍</div>
+        <div class="text-3xl mb-2">&#x1F4CD;</div>
         <span data-i18n="map_loading">Loading pharmacies...</span>
       </div>
     </div>
   </div>
 
-  <!-- ══ REWARDS TAB ════════════════════════════════════════════════════ -->
-  <div id="tab-content-rewards" class="hidden space-y-4 slide-up">
+  <!-- ══ COMMUNITY HEALTH IMPACT TAB (was Rewards) ═══════════════════ -->
+  <div id="tab-content-impact" class="hidden space-y-4 slide-up">
 
-    <!-- Points Hero Card -->
-    <div class="grad-main rounded-[24px] p-5 text-white shadow-xl relative overflow-hidden">
+    <!-- Community Contribution Hero -->
+    <div class="rounded-[24px] p-5 text-white shadow-xl relative overflow-hidden" style="background:linear-gradient(135deg, #0F766E 0%, #059669 40%, #10B981 100%);">
       <div class="absolute -top-10 -right-10 w-36 h-36 rounded-full opacity-10" style="background:white"></div>
       <div class="flex items-center gap-5">
-        <!-- SVG Progress Ring -->
         <svg width="90" height="90" viewBox="0 0 90 90" class="flex-shrink-0">
           <circle cx="45" cy="45" r="38" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="7"/>
           <circle cx="45" cy="45" r="38" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="7"
@@ -487,18 +710,18 @@
           <text x="45" y="51" text-anchor="middle" class="progress-ring-text" font-family="Plus Jakarta Sans,sans-serif" font-size="18" font-weight="800" fill="white" id="ring-number">0</text>
         </svg>
         <div class="flex-1">
-          <div class="text-xs font-semibold uppercase tracking-widest opacity-70" data-i18n="rew_total_pts">Total Points</div>
+          <div class="text-xs font-semibold uppercase tracking-widest opacity-70" data-i18n="impact_score_label">Community Contribution Score</div>
           <div class="text-4xl font-extrabold my-1 leading-none" id="rewards-total-points">0</div>
-          <div class="text-xs text-blue-100" data-i18n="rew_keep">Keep disposing to climb the leaderboard!</div>
+          <div class="text-xs text-emerald-100" data-i18n="impact_score_desc">Every safe return strengthens community health.</div>
           <div class="mt-2 text-xs">
-            <span class="font-semibold" data-i18n="rew_next">Next:</span> <span id="next-badge-label" class="opacity-80">AMR Hero 🦸</span>
+            <span class="font-semibold" data-i18n="impact_next_milestone_label">Next Milestone:</span> <span id="next-badge-label" class="opacity-80">Community Guardian</span>
           </div>
         </div>
       </div>
       <div class="mt-4">
-        <div class="flex justify-between text-xs text-blue-100 mb-1.5">
-          <span id="progress-label">0 / 10 disposals</span>
-          <span data-i18n="rew_next_badge_lbl">Next badge</span>
+        <div class="flex justify-between text-xs text-emerald-100 mb-1.5">
+          <span id="progress-label">0 / 10 safe returns</span>
+          <span data-i18n="impact_next_milestone">Next milestone</span>
         </div>
         <div class="w-full rounded-full h-2.5" style="background:rgba(255,255,255,0.2)">
           <div id="progress-bar" class="h-2.5 rounded-full transition-all" style="width:0%;background:rgba(255,255,255,0.85)"></div>
@@ -506,48 +729,48 @@
       </div>
     </div>
 
-    <!-- AMR Impact Card -->
+    <!-- Your Health Impact -->
     <div class="glass-card p-4" style="border-left:4px solid #10B981">
       <div class="flex items-center gap-3 mb-3">
-        <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0" style="background:rgba(16,185,129,0.10)">🌍</div>
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0" style="background:rgba(16,185,129,0.10)">&#x1F30D;</div>
         <div>
-          <div class="font-extrabold text-sm" style="color:#0A0F1E">Your AMR Impact</div>
-          <div class="text-xs text-slate-400 mt-0.5">Real difference you're making in your community</div>
+          <div class="font-extrabold text-sm" style="color:#0A0F1E" data-i18n="impact_health_title">Your Community Health Impact</div>
+          <div class="text-xs text-slate-400 mt-0.5" data-i18n="impact_health_subtitle">The real difference your actions create</div>
         </div>
       </div>
       <div class="p-3 rounded-[14px] text-center" style="background:linear-gradient(135deg,rgba(16,185,129,0.08),rgba(5,150,105,0.04));border:1.5px solid rgba(16,185,129,0.2)">
-        <div class="text-2xl font-extrabold" style="background:linear-gradient(135deg,#059669,#10B981);-webkit-background-clip:text;-webkit-text-fill-color:transparent" id="impact-people-count">0</div>
-        <div class="text-xs font-semibold mt-1" style="color:#065F46">people in your area helped fight AMR</div>
+        <div class="impact-number" id="impact-people-count">0</div>
+        <div class="text-xs font-semibold mt-1" style="color:#065F46" data-i18n="impact_people_protected">people in your community protected from antimicrobial resistance</div>
       </div>
       <div class="grid grid-cols-2 gap-2 mt-3">
         <div class="p-2.5 rounded-[12px] text-center" style="background:rgba(37,99,235,0.06)">
           <div class="font-bold text-base" style="color:#2563EB" id="impact-courses-completed">0</div>
-          <div class="text-xs text-slate-400 mt-0.5">courses completed</div>
+          <div class="text-xs text-slate-400 mt-0.5" data-i18n="impact_courses_completed">courses completed</div>
         </div>
         <div class="p-2.5 rounded-[12px] text-center" style="background:rgba(124,58,237,0.06)">
           <div class="font-bold text-base" style="color:#7C3AED" id="impact-doses-taken">0</div>
-          <div class="text-xs text-slate-400 mt-0.5">doses taken on time</div>
+          <div class="text-xs text-slate-400 mt-0.5" data-i18n="impact_doses_on_schedule">doses on schedule</div>
         </div>
       </div>
     </div>
 
-    <!-- Badges -->
+    <!-- Milestones (was Badges) -->
     <div class="glass-card p-4">
-      <div class="font-extrabold text-sm mb-4" style="color:#0A0F1E" data-i18n="rew_badges_title">Your Badges</div>
+      <div class="font-extrabold text-sm mb-4" style="color:#0A0F1E" data-i18n="impact_milestones_title">Community Milestones</div>
       <div id="badges-grid" class="grid grid-cols-3 gap-3"></div>
     </div>
 
-    <!-- Leaderboard -->
+    <!-- Community Leaderboard -->
     <div class="glass-card p-4">
       <div class="flex justify-between items-center mb-4">
-        <div class="font-extrabold text-sm" style="color:#0A0F1E" data-i18n="rew_lb_title">Community Leaderboard</div>
+        <div class="font-extrabold text-sm" style="color:#0A0F1E" data-i18n="impact_contributors_title">Community Contributors</div>
         <select id="leaderboard-scope" onchange="loadLeaderboard()" class="text-xs rounded-[10px] px-2 py-1.5 font-medium border" style="border-color:#e2e8f0;color:#475569">
-          <option value="global" data-i18n="rew_lb_global">Global</option>
-          <option value="region" data-i18n="rew_lb_region">My Region</option>
+          <option value="global" data-i18n="impact_all_regions">All Regions</option>
+          <option value="region" data-i18n="impact_my_region">My Region</option>
         </select>
       </div>
       <div id="leaderboard-list" class="space-y-2">
-        <div class="text-center py-4 text-slate-400 text-sm" data-i18n="rew_lb_loading">Loading...</div>
+        <div class="text-center py-4 text-slate-400 text-sm" data-i18n="impact_loading">Loading...</div>
       </div>
     </div>
   </div>
@@ -556,23 +779,23 @@
   <div id="tab-content-doses" class="hidden space-y-4 slide-up">
 
     <!-- Hero Banner -->
-    <div class="grad-main rounded-[24px] p-5 text-white shadow-xl relative overflow-hidden">
+    <div class="rounded-[24px] p-5 text-white shadow-xl relative overflow-hidden" style="background:linear-gradient(135deg, #0F766E 0%, #059669 40%, #10B981 100%);">
       <div class="absolute -top-6 -right-6 w-24 h-24 rounded-full opacity-10" style="background:white"></div>
-      <div class="text-xs font-semibold uppercase tracking-widest opacity-70 mb-1">Dose Tracker</div>
-      <h2 class="text-lg font-extrabold leading-snug">Complete Every Dose. Fight AMR.</h2>
-      <p class="text-blue-100 text-xs mt-1 leading-relaxed">+1 point for every dose taken correctly. Finish your course to earn the Course Champion badge 🏆</p>
+      <div class="text-xs font-semibold uppercase tracking-widest opacity-70 mb-1" data-i18n="dose_badge">Medication Tracker</div>
+      <h2 class="text-lg font-extrabold leading-snug" data-i18n="dose_title">Complete Every Dose. Protect Your Health.</h2>
+      <p class="text-emerald-100 text-xs mt-1 leading-relaxed" data-i18n="dose_desc">Complete your full daily dosage to earn a contribution point. Finish your course to reach a milestone.</p>
       <div class="flex items-center gap-5 mt-3">
         <div class="text-center">
           <div class="text-2xl font-extrabold" id="dose-streak">0</div>
-          <div class="text-xs text-blue-200">Day Streak</div>
+          <div class="text-xs text-emerald-200" data-i18n="dose_day_streak">Day Streak</div>
         </div>
         <div class="text-center">
           <div class="text-2xl font-extrabold" id="dose-points-earned">0</div>
-          <div class="text-xs text-blue-200">Dose Points</div>
+          <div class="text-xs text-emerald-200" data-i18n="dose_contributions">Contributions</div>
         </div>
         <div class="text-center">
           <div class="text-2xl font-extrabold" id="dose-completion-pct">0%</div>
-          <div class="text-xs text-blue-200">Completion</div>
+          <div class="text-xs text-emerald-200" data-i18n="dose_completion">Completion</div>
         </div>
       </div>
     </div>
@@ -581,46 +804,46 @@
     <div class="glass-card p-5">
       <div class="flex items-center justify-between mb-3">
         <div>
-          <h3 class="font-extrabold text-sm" style="color:#0A0F1E">➕ Add Medication</h3>
-          <p class="text-xs text-slate-400 mt-0.5">Start tracking a new antibiotic course</p>
+          <h3 class="font-extrabold text-sm" style="color:#0A0F1E" data-i18n="dose_add_title">Add Medication</h3>
+          <p class="text-xs text-slate-400 mt-0.5" data-i18n="dose_add_subtitle">Track a new medicine course</p>
         </div>
         <button onclick="toggleDoseForm()" id="dose-form-toggle"
           class="text-xs px-3 py-1.5 rounded-full font-semibold transition-all"
-          style="background:rgba(37,99,235,0.08);border:1.5px solid rgba(37,99,235,0.2);color:#2563EB">+ Add</button>
+          style="background:rgba(37,99,235,0.08);border:1.5px solid rgba(37,99,235,0.2);color:#2563EB" data-i18n="dose_add_btn">+ Add</button>
       </div>
       <div id="dose-add-form" class="hidden space-y-3">
         <div>
-          <label class="inp-label">Medicine Name *</label>
-          <input id="dose-med-name" type="text" placeholder="e.g. Amoxicillin 500mg" class="inp" />
+          <label class="inp-label" data-i18n="dose_med_name_lbl">Medicine Name *</label>
+          <input id="dose-med-name" type="text" placeholder="e.g. Amoxicillin 500mg" data-i18n-placeholder="dose_med_name_ph" class="inp" />
         </div>
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="inp-label">Times Per Day</label>
+            <label class="inp-label" data-i18n="dose_freq_lbl">Times Per Day</label>
             <select id="dose-frequency" class="inp" style="appearance:none">
               <option value="1">Once daily</option>
               <option value="2">Twice daily</option>
-              <option value="3" selected>3× daily</option>
-              <option value="4">4× daily</option>
+              <option value="3" selected>3x daily</option>
+              <option value="4">4x daily</option>
             </select>
           </div>
           <div>
-            <label class="inp-label">Duration (days)</label>
+            <label class="inp-label" data-i18n="dose_duration_lbl">Duration (days)</label>
             <input id="dose-days" type="number" placeholder="7" min="1" max="90" class="inp" />
           </div>
         </div>
         <button onclick="addDoseMedication()" class="btn-primary">
           <span class="shimmer"></span>
-          💊 Start Tracking
+          <span data-i18n="dose_start_tracking">Start Tracking</span>
         </button>
       </div>
     </div>
 
-    <!-- Missed Dose Alert (shown dynamically) -->
+    <!-- Missed Dose Alert -->
     <div id="missed-dose-alert" class="hidden p-4 rounded-[16px]" style="background:rgba(239,68,68,0.07);border:1.5px solid rgba(239,68,68,0.2)">
       <div class="flex items-center gap-3">
-        <span class="text-2xl">⚠️</span>
+        <span class="text-2xl">&#9888;&#65039;</span>
         <div>
-          <div class="font-bold text-sm" style="color:#991B1B">Missed Dose Alert</div>
+          <div class="font-bold text-sm" style="color:#991B1B" data-i18n="dose_missed_title">Missed Dose Alert</div>
           <div id="missed-dose-text" class="text-xs mt-0.5" style="color:#EF4444"></div>
         </div>
       </div>
@@ -630,7 +853,7 @@
     <div class="glass-card p-5">
       <div class="flex items-center justify-between mb-4">
         <div>
-          <h3 class="font-extrabold text-sm" style="color:#0A0F1E">📅 Today's Doses</h3>
+          <h3 class="font-extrabold text-sm" style="color:#0A0F1E" data-i18n="dose_today_title">Today's Doses</h3>
           <p class="text-xs text-slate-400 mt-0.5" id="today-dose-date"></p>
         </div>
         <div class="flex items-center gap-1 px-3 py-1.5 rounded-[12px]" style="background:rgba(37,99,235,0.08)">
@@ -639,60 +862,58 @@
           <span id="doses-total-count" class="text-xs text-slate-500 font-semibold">0</span>
         </div>
       </div>
+      <!-- Daily completion banner -->
+      <div id="daily-complete-banner" class="hidden mb-3 p-3 rounded-[14px] text-center" style="background:linear-gradient(135deg,rgba(16,185,129,0.1),rgba(5,150,105,0.05));border:1.5px solid rgba(16,185,129,0.2)">
+        <div class="font-bold text-sm" style="color:#065F46" data-i18n="dose_all_complete">All doses completed today! +1 Contribution Point</div>
+      </div>
       <div id="today-dose-list">
         <div class="text-center py-8 text-slate-400">
-          <div class="text-3xl mb-2">💊</div>
-          <div class="text-sm font-medium">No medications tracked yet</div>
-          <div class="text-xs mt-1">Add a medication above to start</div>
+          <div class="text-3xl mb-2">&#x1F48A;</div>
+          <div class="text-sm font-medium" data-i18n="dose_no_meds">No medications tracked yet</div>
+          <div class="text-xs mt-1" data-i18n="dose_no_meds_hint">Add a medication above to start</div>
         </div>
       </div>
     </div>
 
     <!-- Active Courses -->
     <div class="glass-card p-5">
-      <h3 class="font-extrabold text-sm mb-4" style="color:#0A0F1E">💊 My Active Courses</h3>
+      <h3 class="font-extrabold text-sm mb-4" style="color:#0A0F1E" data-i18n="dose_active_courses">My Active Courses</h3>
       <div id="active-courses-list">
-        <div class="text-center py-6 text-slate-400 text-xs">No active medications</div>
+        <div class="text-center py-6 text-slate-400 text-xs" data-i18n="dose_no_active">No active medications</div>
       </div>
     </div>
-
-  </div><!-- /tab-content-doses -->
+  </div>
 
   <!-- ══ CHAT TAB ═══════════════════════════════════════════════════════ -->
   <div id="tab-content-chat" class="hidden space-y-3 slide-up">
-
-    <!-- Bot Header -->
     <div class="glass-card p-4 flex items-center gap-3">
-      <div class="w-12 h-12 grad-main rounded-2xl flex items-center justify-center text-2xl shadow-lg flex-shrink-0">🤖</div>
+      <div class="w-12 h-12 grad-main rounded-2xl flex items-center justify-center text-2xl shadow-lg flex-shrink-0">&#x1F916;</div>
       <div>
         <div class="font-extrabold text-sm" style="color:#0A0F1E" data-i18n="chat_title">MedBot</div>
         <div class="text-xs text-slate-400 font-medium flex items-center gap-1.5 mt-0.5">
           <span class="w-2 h-2 rounded-full pulse-dot" style="background:#10B981;display:inline-block"></span>
-          <span data-i18n="chat_subtitle">AI-powered antibiotic awareness assistant</span>
+          <span data-i18n="chat_subtitle">AI-powered medicine disposal & health assistant</span>
         </div>
       </div>
     </div>
 
-    <!-- Chat Window -->
     <div id="chat-window" class="glass-card p-4 overflow-y-auto space-y-3" style="height:300px">
       <div class="flex gap-2 items-end">
-        <div class="w-8 h-8 grad-main rounded-full flex items-center justify-center text-sm flex-shrink-0 shadow">🤖</div>
-        <div class="chat-bot-msg" id="chat-greeting-msg">
-          Hi! I'm MedBot 👋<br><br>I can help you with safe antibiotic disposal, AMR awareness, and how to earn rewards. What would you like to know?
+        <div class="w-8 h-8 grad-main rounded-full flex items-center justify-center text-sm flex-shrink-0 shadow">&#x1F916;</div>
+        <div class="chat-bot-msg" id="chat-greeting-msg" data-i18n="chat_greeting">
+          Hi! I'm MedBot. I can help you with safe medicine disposal, understanding antimicrobial resistance, and finding the best disposal options for your medicines. What would you like to know?
         </div>
       </div>
     </div>
 
-    <!-- Suggestions -->
     <div id="chat-suggestions" class="flex flex-wrap gap-2">
-      <button onclick="sendSuggestion('How to dispose antibiotics safely?')" class="text-xs px-3 py-2 rounded-full font-semibold chip-blue transition-all hover:scale-[1.03]" data-i18n="chat_chip1">💊 Disposal guide</button>
-      <button onclick="sendSuggestion('What is AMR?')" class="text-xs px-3 py-2 rounded-full font-semibold chip-red transition-all hover:scale-[1.03]" data-i18n="chat_chip2">⚠️ What is AMR?</button>
-      <button onclick="sendSuggestion('How do I earn reward points?')" class="text-xs px-3 py-2 rounded-full font-semibold chip-green transition-all hover:scale-[1.03]" data-i18n="chat_chip3">★ Earn points</button>
+      <button onclick="sendSuggestion('How to dispose medicines safely?')" class="text-xs px-3 py-2 rounded-full font-semibold chip-blue transition-all hover:scale-[1.03]"><span data-i18n="chat_chip_disposal">&#x1F48A; Disposal guide</span></button>
+      <button onclick="sendSuggestion('What is antimicrobial resistance?')" class="text-xs px-3 py-2 rounded-full font-semibold chip-red transition-all hover:scale-[1.03]"><span data-i18n="chat_chip_amr">&#9888;&#65039; About AMR</span></button>
+      <button onclick="sendSuggestion('Why does safe disposal matter?')" class="text-xs px-3 py-2 rounded-full font-semibold chip-green transition-all hover:scale-[1.03]"><span data-i18n="chat_chip_why">&#x1F30D; Why it matters</span></button>
     </div>
 
-    <!-- Input Bar -->
     <div class="flex gap-2 items-center">
-      <input id="chat-input" type="text" placeholder="Ask MedBot anything..."
+      <input id="chat-input" type="text" placeholder="Ask MedBot anything about safe disposal..."
         data-i18n-placeholder="chat_ph"
         class="inp flex-1" style="padding:12px 16px"
         onkeydown="if(event.key==='Enter') sendMessage()" />
@@ -703,63 +924,63 @@
     </div>
   </div>
 
-</div><!-- /content -->
+</div>
 
-<!-- ── BOTTOM NAV ─────────────────────────────────────────────────────── -->
+<!-- BOTTOM NAV -->
 <nav class="bottom-nav">
   <div class="max-w-md mx-auto flex" style="padding:0 8px">
     <button onclick="showTab('home')" id="tab-home" class="nav-btn active">
-      <span class="nav-icon">🏠</span>
+      <span class="nav-icon">&#x1F3E0;</span>
       <span class="nav-label" data-i18n="nav_home">Home</span>
       <span class="nav-underline"></span>
     </button>
     <button onclick="showTab('dispose')" id="tab-dispose" class="nav-btn">
-      <span class="nav-icon">📦</span>
+      <span class="nav-icon">&#x1F48A;</span>
       <span class="nav-label" data-i18n="nav_dispose">Dispose</span>
       <span class="nav-underline"></span>
     </button>
     <button onclick="showTab('map')" id="tab-map" class="nav-btn">
-      <span class="nav-icon">🗺️</span>
+      <span class="nav-icon">&#x1F5FA;&#xFE0F;</span>
       <span class="nav-label" data-i18n="nav_map">Map</span>
       <span class="nav-underline"></span>
     </button>
-    <button onclick="showTab('rewards')" id="tab-rewards" class="nav-btn">
-      <span class="nav-icon">🏆</span>
-      <span class="nav-label" data-i18n="nav_rewards">Rewards</span>
+    <button onclick="showTab('impact')" id="tab-impact" class="nav-btn">
+      <span class="nav-icon">&#x1F30D;</span>
+      <span class="nav-label" data-i18n="nav_impact">Impact</span>
       <span class="nav-underline"></span>
     </button>
     <button onclick="showTab('doses')" id="tab-doses" class="nav-btn">
-      <span class="nav-icon">💊</span>
-      <span class="nav-label">Doses</span>
+      <span class="nav-icon">&#x1F4CB;</span>
+      <span class="nav-label" data-i18n="nav_doses">Doses</span>
       <span class="nav-underline"></span>
     </button>
     <button onclick="showTab('chat')" id="tab-chat" class="nav-btn">
-      <span class="nav-icon">🤖</span>
+      <span class="nav-icon">&#x1F916;</span>
       <span class="nav-label" data-i18n="nav_chat">MedBot</span>
       <span class="nav-underline"></span>
     </button>
   </div>
 </nav>
 
-<!-- ── HOME DISPOSAL MODAL ─────────────────────────────────────────────── -->
+<!-- HOME DISPOSAL MODAL -->
 <div id="home-guide-modal" class="hidden fixed inset-0 z-50 flex items-end" style="background:rgba(10,15,30,0.6);backdrop-filter:blur(4px)">
   <div class="w-full max-w-md mx-auto rounded-t-[28px] p-6 space-y-4 max-h-[85vh] overflow-y-auto"
        style="background:white;box-shadow:0 -8px 48px rgba(37,99,235,0.15)">
     <div class="w-12 h-1 bg-slate-200 rounded-full mx-auto mb-2"></div>
     <div class="flex justify-between items-center">
-      <h2 class="font-extrabold text-lg" style="color:#0A0F1E" data-i18n="modal_title">🏠 Home Disposal Guide</h2>
-      <button onclick="closeModal()" class="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 transition-all text-xl font-light">×</button>
+      <h2 class="font-extrabold text-lg" style="color:#0A0F1E" data-i18n="modal_home_title">Home Disposal Guide</h2>
+      <button onclick="closeModal()" class="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 transition-all text-xl font-light">&times;</button>
     </div>
-    <div class="p-3 rounded-[14px] text-xs" style="background:rgba(239,68,68,0.07);border:1.5px solid rgba(239,68,68,0.2);color:#B91C1C" data-i18n="modal_warning">
-      ⚠️ Never flush antibiotics down the toilet or pour them down drains.
+    <div class="p-3 rounded-[14px] text-xs" style="background:rgba(239,68,68,0.07);border:1.5px solid rgba(239,68,68,0.2);color:#B91C1C">
+      <span data-i18n="modal_home_warning">&#9888;&#65039; Never flush medicines down the toilet or pour them down drains. Do not throw antibiotics in household dustbins.</span>
     </div>
     <ol class="space-y-3 text-sm" style="color:#374151" id="modal-guide-steps">
-      <li class="flex gap-3"><span class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 text-white" style="background:linear-gradient(135deg,#2563EB,#7C3AED)">1</span> <span data-i18n="modal_step1">Remove medicines from original packaging.</span></li>
-      <li class="flex gap-3"><span class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 text-white" style="background:linear-gradient(135deg,#2563EB,#7C3AED)">2</span> <span data-i18n="modal_step2">Mix with coffee grounds, dirt, or cat litter.</span></li>
-      <li class="flex gap-3"><span class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 text-white" style="background:linear-gradient(135deg,#2563EB,#7C3AED)">3</span> <span data-i18n="modal_step3">Seal in a non-transparent, closed bag.</span></li>
-      <li class="flex gap-3"><span class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 text-white" style="background:linear-gradient(135deg,#2563EB,#7C3AED)">4</span> <span data-i18n="modal_step4">Dispose in your household waste bin (NOT recycling).</span></li>
+      <li class="flex gap-3"><span class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 text-white" style="background:linear-gradient(135deg,#2563EB,#7C3AED)">1</span> <span data-i18n="modal_home_step1">Remove medicines from original packaging.</span></li>
+      <li class="flex gap-3"><span class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 text-white" style="background:linear-gradient(135deg,#2563EB,#7C3AED)">2</span> <span data-i18n="modal_home_step2">Mix with coffee grounds, dirt, or cat litter.</span></li>
+      <li class="flex gap-3"><span class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 text-white" style="background:linear-gradient(135deg,#2563EB,#7C3AED)">3</span> <span data-i18n="modal_home_step3">Seal in a non-transparent, closed bag.</span></li>
+      <li class="flex gap-3"><span class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 text-white" style="background:linear-gradient(135deg,#2563EB,#7C3AED)">4</span> <span data-i18n="modal_home_step4">Dispose in your household waste bin (NOT recycling).</span></li>
     </ol>
-    <button onclick="closeModal()" class="btn-primary" data-i18n="modal_close"><span class="shimmer"></span>Got it! 👍</button>
+    <button onclick="closeModal()" class="btn-primary"><span class="shimmer"></span><span data-i18n="modal_home_btn">Got it!</span></button>
   </div>
 </div>
 
@@ -808,11 +1029,23 @@ async function loadProfile() {
 }
 
 function updateStatsDisplay(disposals, points, badges) {
+  // Homepage impact stats
   document.getElementById('stat-disposals').textContent = disposals;
-  document.getElementById('stat-points').textContent = points;
-  document.getElementById('stat-badges').textContent = badges;
-  document.getElementById('header-points').textContent = `${points} pts`;
+  document.getElementById('stat-antibiotics').textContent = Math.floor(disposals * 0.6);
+  document.getElementById('stat-community').textContent = Math.max(1, Math.floor(disposals * 2.5));
+  document.getElementById('stat-env-impact').textContent = disposals;
+
+  // Header contribution display
+  document.getElementById('header-points').textContent = `${points} impact`;
+
+  // Impact tab
   document.getElementById('rewards-total-points').textContent = points;
+
+  // Home milestones
+  document.getElementById('home-safe-returns').textContent = disposals;
+  document.getElementById('home-contribution').textContent = points;
+  document.getElementById('home-milestones').textContent = badges;
+
   // Update ring
   const pct = Math.min(100, (points / 500) * 100);
   const circumference = 238.76;
@@ -822,17 +1055,38 @@ function updateStatsDisplay(disposals, points, badges) {
 
 // ── TAB NAVIGATION ──────────────────────────────────────────────────
 function showTab(name) {
-  ['home','dispose','map','rewards','doses','chat'].forEach(t => {
-    document.getElementById(`tab-content-${t}`).classList.add('hidden');
+  ['home','dispose','map','impact','doses','chat'].forEach(t => {
+    const el = document.getElementById(`tab-content-${t}`);
+    if (el) el.classList.add('hidden');
     const btn = document.getElementById(`tab-${t}`);
-    btn.classList.remove('active');
+    if (btn) btn.classList.remove('active');
   });
-  document.getElementById(`tab-content-${name}`).classList.remove('hidden');
-  document.getElementById(`tab-${name}`).classList.add('active');
+  const contentEl = document.getElementById(`tab-content-${name}`);
+  if (contentEl) contentEl.classList.remove('hidden');
+  const tabBtn = document.getElementById(`tab-${name}`);
+  if (tabBtn) tabBtn.classList.add('active');
 
   if (name === 'map') { loadPharmacies(); setTimeout(() => citizenMap && citizenMap.invalidateSize(), 200); }
-  if (name === 'rewards') { loadLeaderboard(); renderBadges([]); updateImpactMetrics(); }
+  if (name === 'impact') { loadLeaderboard(); renderBadges([]); updateImpactMetrics(); }
   if (name === 'doses') { renderDoseTab(); }
+}
+
+// ── MEDICINE CATEGORY CONDITIONAL LOGIC ─────────────────────────────
+function onCategoryChange() {
+  const category = document.getElementById('med-category').value;
+  const antibioticSection = document.getElementById('antibiotic-section');
+  const standardNote = document.getElementById('standard-return-note');
+
+  if (category === 'antibiotic') {
+    antibioticSection.classList.remove('hidden');
+    standardNote.classList.add('hidden');
+  } else if (category && category !== '') {
+    antibioticSection.classList.add('hidden');
+    standardNote.classList.remove('hidden');
+  } else {
+    antibioticSection.classList.add('hidden');
+    standardNote.classList.add('hidden');
+  }
 }
 
 // ── DISPOSAL FLOW ───────────────────────────────────────────────────
@@ -840,11 +1094,15 @@ async function initiateDisposal() {
   const name = document.getElementById('med-name').value.trim();
   if (!name) { alert('Please enter the medicine name.'); return; }
 
+  const category = document.getElementById('med-category').value;
+  if (!category) { alert('Please select a medicine category.'); return; }
+
   const payload = {
     citizen_id: citizenId,
     medicine_name: name,
     medicine_barcode: document.getElementById('med-barcode').value.trim(),
-    antibiotic_class: document.getElementById('med-class').value,
+    antibiotic_class: category === 'antibiotic' ? document.getElementById('med-class').value : '',
+    medicine_category: category,
     quantity: parseInt(document.getElementById('med-qty').value) || 1,
     expiry_date: document.getElementById('med-expiry').value || null,
     is_home_disposal: document.getElementById('home-disposal').checked,
@@ -867,9 +1125,10 @@ async function initiateDisposal() {
     disposalData = {
       disposal_id: fakeId,
       medicine_name: name,
+      medicine_category: category,
       status: 'pending',
       is_home_disposal: payload.is_home_disposal,
-      points_preview: 10,
+      points_preview: category === 'antibiotic' ? 15 : 10,
     };
   }
 
@@ -877,28 +1136,36 @@ async function initiateDisposal() {
   showQRStep(disposalData);
 }
 
+const CATEGORY_LABELS = {
+  antibiotic: 'Antibiotic',
+  pain_relief: 'Pain Relief',
+  cold_flu: 'Cold & Flu',
+  diabetic: 'Diabetic',
+  cardiac: 'Cardiac',
+  supplements: 'Supplements',
+  others: 'Others',
+};
+
 function showQRStep(data) {
   document.getElementById('disposal-step1').classList.add('hidden');
   document.getElementById('disposal-step2').classList.remove('hidden');
 
-  // Update step indicators
   document.getElementById('step2-circle').className = 'step-active-circle';
   document.getElementById('step2-label').className = 'text-xs font-semibold mt-2';
   document.getElementById('step2-label').style.color = '#2563EB';
   document.getElementById('step-conn-1').className = 'step-connector-active';
 
   document.getElementById('qr-med-name').textContent = data.medicine_name;
-  document.getElementById('qr-points').textContent = `+${data.points_preview || 10} pts`;
+  const cat = data.medicine_category || document.getElementById('med-category').value;
+  document.getElementById('qr-category').textContent = CATEGORY_LABELS[cat] || cat;
   document.getElementById('disposal-id-display').textContent = `ID: ${data.disposal_id}`;
 
   const container = document.getElementById('qr-container');
   container.innerHTML = '';
   new QRCode(container, {
     text: data.disposal_id,
-    width: 180,
-    height: 180,
-    colorDark: '#2563EB',
-    colorLight: '#ffffff',
+    width: 180, height: 180,
+    colorDark: '#2563EB', colorLight: '#ffffff',
     correctLevel: QRCode.CorrectLevel.H,
   });
 
@@ -911,8 +1178,7 @@ function showQRStep(data) {
       'Dispose in general household waste.',
       'Remove personal info from packaging.',
     ];
-    const ol = document.getElementById('home-guide-steps');
-    ol.innerHTML = steps.map(s => `<li>${s}</li>`).join('');
+    document.getElementById('home-guide-steps').innerHTML = steps.map(s => `<li>${s}</li>`).join('');
   }
 
   loadProfile();
@@ -924,10 +1190,13 @@ function resetDisposal() {
   document.getElementById('med-name').value = '';
   document.getElementById('med-barcode').value = '';
   document.getElementById('med-expiry').value = '';
+  document.getElementById('med-category').value = '';
   document.getElementById('home-disposal').checked = false;
   document.getElementById('toggle-bg').style.background = '#e2e8f0';
   document.getElementById('home-disposal-guide').classList.add('hidden');
   document.getElementById('qr-container').innerHTML = '';
+  document.getElementById('antibiotic-section').classList.add('hidden');
+  document.getElementById('standard-return-note').classList.add('hidden');
   ['step2-circle','step3-circle'].forEach(id => {
     document.getElementById(id).className = 'step-inactive-circle';
   });
@@ -938,8 +1207,7 @@ function resetDisposal() {
 }
 
 function toggleScanner() {
-  const status = document.getElementById('scan-status');
-  status.classList.toggle('hidden');
+  document.getElementById('scan-status').classList.toggle('hidden');
 }
 
 // ── PHARMACIES + LEAFLET MAP ─────────────────────────────────────────
@@ -961,13 +1229,10 @@ function getDemoPharmacies() {
 }
 
 function initCitizenMap(centerLat, centerLng) {
-  if (citizenMap) {
-    citizenMap.setView([centerLat, centerLng], 5);
-    return;
-  }
+  if (citizenMap) { citizenMap.setView([centerLat, centerLng], 5); return; }
   citizenMap = L.map('citizen-map', { zoomControl: true, attributionControl: true }).setView([centerLat, centerLng], 5);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
     maxZoom: 18,
   }).addTo(citizenMap);
   setTimeout(() => citizenMap.invalidateSize(), 100);
@@ -976,22 +1241,18 @@ function initCitizenMap(centerLat, centerLng) {
 const pharmacyIcon = L.divIcon({
   className: '',
   html: `<div style="background:linear-gradient(135deg,#2563EB,#7C3AED);color:white;border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 4px 12px rgba(37,99,235,0.45);border:2px solid white;font-weight:700">+</div>`,
-  iconSize: [30, 30],
-  iconAnchor: [15, 15],
-  popupAnchor: [0, -18],
+  iconSize: [30, 30], iconAnchor: [15, 15], popupAnchor: [0, -18],
 });
 
 const userIcon = L.divIcon({
   className: '',
   html: `<div style="background:#10b981;border-radius:50%;width:16px;height:16px;border:3px solid white;box-shadow:0 0 0 4px rgba(16,185,129,0.3);"></div>`,
-  iconSize: [16, 16],
-  iconAnchor: [8, 8],
+  iconSize: [16, 16], iconAnchor: [8, 8],
 });
 
 function addPharmacyMarkers(pharmacies) {
   pharmacyMarkers.forEach(m => citizenMap.removeLayer(m));
   pharmacyMarkers = [];
-
   pharmacies.forEach(p => {
     if (!p.latitude || !p.longitude) return;
     const marker = L.marker([p.latitude, p.longitude], { icon: pharmacyIcon })
@@ -1000,14 +1261,13 @@ function addPharmacyMarkers(pharmacies) {
         <div style="min-width:160px;font-family:'Plus Jakarta Sans',sans-serif">
           <div style="font-weight:700;color:#0A0F1E;margin-bottom:4px">${p.name}</div>
           <div style="color:#64748b;font-size:11px">${p.address || ''}, ${p.city}</div>
-          <div style="color:#64748b;margin-top:2px;font-size:11px">🕐 ${p.operating_hours || '9AM-9PM'}</div>
-          <div style="color:#059669;margin-top:4px;font-weight:600;font-size:11px">✓ ${p.total_verified || 0} verified</div>
-          ${p.phone ? `<a href="tel:${p.phone}" style="display:block;margin-top:6px;background:linear-gradient(135deg,#2563EB,#7C3AED);color:white;text-align:center;padding:6px 8px;border-radius:10px;text-decoration:none;font-size:11px;font-weight:700">📞 Call</a>` : ''}
+          <div style="color:#64748b;margin-top:2px;font-size:11px">&#x1F554; ${p.operating_hours || '9AM-9PM'}</div>
+          <div style="color:#059669;margin-top:4px;font-weight:600;font-size:11px">&#10003; ${p.total_verified || 0} verified returns</div>
+          ${p.phone ? `<a href="tel:${p.phone}" style="display:block;margin-top:6px;background:linear-gradient(135deg,#2563EB,#7C3AED);color:white;text-align:center;padding:6px 8px;border-radius:10px;text-decoration:none;font-size:11px;font-weight:700">&#x1F4DE; Call</a>` : ''}
         </div>
       `);
     pharmacyMarkers.push(marker);
   });
-
   if (pharmacyMarkers.length) {
     const group = L.featureGroup(pharmacyMarkers);
     citizenMap.fitBounds(group.getBounds().pad(0.15));
@@ -1018,12 +1278,7 @@ async function loadPharmacies() {
   initCitizenMap(20.5937, 78.9629);
   try {
     const r = await fetch(`${API_BASE}/pharmacies/`);
-    if (r.ok) {
-      allPharmacies = await r.json();
-      addPharmacyMarkers(allPharmacies);
-      renderPharmacies(allPharmacies);
-      return;
-    }
+    if (r.ok) { allPharmacies = await r.json(); addPharmacyMarkers(allPharmacies); renderPharmacies(allPharmacies); return; }
   } catch (e) {}
   allPharmacies = getDemoPharmacies();
   addPharmacyMarkers(allPharmacies);
@@ -1036,9 +1291,7 @@ function locateMe() {
     const { latitude: lat, longitude: lng } = pos.coords;
     if (userMarker) citizenMap.removeLayer(userMarker);
     userMarker = L.marker([lat, lng], { icon: userIcon })
-      .addTo(citizenMap)
-      .bindPopup('<div style="font-weight:700;color:#059669">📍 You are here</div>')
-      .openPopup();
+      .addTo(citizenMap).bindPopup('<div style="font-weight:700;color:#059669">You are here</div>').openPopup();
     citizenMap.setView([lat, lng], 13);
   }, () => alert('Unable to get your location. Please allow location access.'));
 }
@@ -1046,7 +1299,7 @@ function locateMe() {
 function renderPharmacies(pharmacies) {
   const list = document.getElementById('pharmacy-list');
   if (!pharmacies.length) {
-    list.innerHTML = `<div class="glass-card text-center py-8 text-slate-400 text-sm"><div class="text-3xl mb-2">🔍</div>${t('map_no_results')}</div>`;
+    list.innerHTML = `<div class="glass-card text-center py-8 text-slate-400 text-sm"><div class="text-3xl mb-2">&#x1F50D;</div>No pharmacies found</div>`;
     return;
   }
   list.innerHTML = pharmacies.map(p => `
@@ -1056,19 +1309,19 @@ function renderPharmacies(pharmacies) {
         <div class="flex-1">
           <div class="font-bold text-sm" style="color:#0A0F1E">${p.name}</div>
           <div class="text-xs text-slate-400 mt-0.5">${p.address || ''}, ${p.city}</div>
-          <div class="text-xs text-slate-400 mt-1">🕐 ${p.operating_hours || '9AM-9PM'}</div>
+          <div class="text-xs text-slate-400 mt-1">&#x1F554; ${p.operating_hours || '9AM-9PM'}</div>
         </div>
         <div class="text-right ml-3 flex-shrink-0">
-          ${p.distance_km ? `<div class="text-xs font-bold px-2 py-0.5 rounded-full" style="background:rgba(37,99,235,0.08);color:#2563EB">${p.distance_km} ${t('map_km')}</div>` : ''}
-          <div class="text-xs font-semibold mt-1" style="color:#059669">✓ ${p.total_verified || 0} ${t('ph_stat_total')}</div>
+          ${p.distance_km ? `<div class="text-xs font-bold px-2 py-0.5 rounded-full" style="background:rgba(37,99,235,0.08);color:#2563EB">${p.distance_km} km</div>` : ''}
+          <div class="text-xs font-semibold mt-1" style="color:#059669">&#10003; ${p.total_verified || 0} verified</div>
         </div>
       </div>
       <div class="flex gap-2 mt-3">
         <button onclick="event.stopPropagation(); flyToPharmacy(${p.id})" class="flex-1 text-xs py-2 rounded-[10px] font-semibold transition-all"
-          style="background:rgba(37,99,235,0.08);border:1px solid rgba(37,99,235,0.2);color:#2563EB">🗺️ On Map</button>
+          style="background:rgba(37,99,235,0.08);border:1px solid rgba(37,99,235,0.2);color:#2563EB">&#x1F5FA;&#xFE0F; On Map</button>
         <button class="flex-1 text-xs py-2 rounded-[10px] font-semibold transition-all"
           style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);color:#059669"
-          onclick="event.stopPropagation(); callPharmacy('${p.phone}')">📞 Call</button>
+          onclick="event.stopPropagation(); callPharmacy('${p.phone}')">&#x1F4DE; Call</button>
       </div>
     </div>
   `).join('');
@@ -1077,9 +1330,7 @@ function renderPharmacies(pharmacies) {
 function filterPharmacies() {
   const q = document.getElementById('map-search').value.toLowerCase();
   const filtered = allPharmacies.filter(p =>
-    p.name.toLowerCase().includes(q) ||
-    (p.city || '').toLowerCase().includes(q) ||
-    (p.address || '').toLowerCase().includes(q)
+    p.name.toLowerCase().includes(q) || (p.city || '').toLowerCase().includes(q) || (p.address || '').toLowerCase().includes(q)
   );
   addPharmacyMarkers(filtered);
   renderPharmacies(filtered);
@@ -1097,25 +1348,20 @@ function flyToPharmacy(id) {
   if (marker) setTimeout(() => marker.openPopup(), 1100);
 }
 
-function selectPharmacy(id) {
-  flyToPharmacy(id);
-}
+function selectPharmacy(id) { flyToPharmacy(id); }
+function callPharmacy(phone) { if (phone) window.location.href = `tel:${phone}`; }
 
-function callPharmacy(phone) {
-  if (phone) window.location.href = `tel:${phone}`;
-}
-
-// ── REWARDS & BADGES ────────────────────────────────────────────────
+// ── MILESTONES & BADGES (renamed from Rewards) ──────────────────────
 const ALL_BADGES = [
-  { type:'first_disposal', icon:'🌱', label:'First Disposal', threshold:1 },
-  { type:'amr_hero', icon:'🦸', label:'AMR Hero', threshold:10 },
-  { type:'safe_champion', icon:'🏅', label:'Safe Champion', threshold:25 },
-  { type:'community_leader', icon:'🌟', label:'Community Leader', threshold:50 },
-  { type:'eco_warrior', icon:'🌍', label:'Eco Warrior', threshold:100 },
-  { type:'health_guardian', icon:'🛡️', label:'Health Guardian', threshold:200 },
-  { type:'course_champion', icon:'🏆', label:'Course Champion', doseThreshold:1, desc:'Complete 1 full antibiotic course' },
-  { type:'dose_streak_7', icon:'🔥', label:'7-Day Streak', doseThreshold:7, desc:'Take doses on time for 7 days' },
-  { type:'responsible_user', icon:'💚', label:'Responsible User', doseThreshold:21, desc:'Complete 3 antibiotic courses correctly' },
+  { type:'first_disposal', icon:'&#x1F331;', label:'First Safe Return', threshold:1 },
+  { type:'amr_hero', icon:'&#x1F9EC;', label:'Health Protector', threshold:10 },
+  { type:'safe_champion', icon:'&#x1F3C5;', label:'Safe Disposal Champion', threshold:25 },
+  { type:'community_leader', icon:'&#x1F31F;', label:'Community Leader', threshold:50 },
+  { type:'eco_warrior', icon:'&#x1F30D;', label:'Environmental Guardian', threshold:100 },
+  { type:'health_guardian', icon:'&#x1F6E1;&#xFE0F;', label:'Health Guardian', threshold:200 },
+  { type:'course_champion', icon:'&#x1F3C6;', label:'Course Champion', doseThreshold:1, desc:'Complete 1 full medicine course' },
+  { type:'dose_streak_7', icon:'&#x1F525;', label:'7-Day Adherence', doseThreshold:7, desc:'Take all daily doses for 7 days' },
+  { type:'responsible_user', icon:'&#x1F49A;', label:'Responsible Citizen', doseThreshold:21, desc:'Complete 3 medicine courses' },
 ];
 
 function renderBadges(earned) {
@@ -1123,19 +1369,18 @@ function renderBadges(earned) {
   const doseData = getDoseStats();
   grid.innerHTML = ALL_BADGES.map(b => {
     let isEarned = earned.includes(b.type);
-    // Check dose-based badges locally
     if (b.doseThreshold !== undefined) {
       if (b.type === 'course_champion') isEarned = doseData.completedCourses >= 1;
       else if (b.type === 'dose_streak_7') isEarned = doseData.streak >= 7;
       else if (b.type === 'responsible_user') isEarned = doseData.completedCourses >= 3;
     }
-    const subtitle = b.doseThreshold !== undefined ? (b.desc || '') : `${b.threshold} disp.`;
+    const subtitle = b.doseThreshold !== undefined ? (b.desc || '') : `${b.threshold} returns`;
     return `
       <div class="text-center p-3 rounded-[16px] transition-all ${isEarned ? 'badge-earned' : 'opacity-50'}"
-           style="${isEarned ? 'background:linear-gradient(135deg,rgba(245,158,11,0.1),rgba(251,191,36,0.06));border:2px solid rgba(245,158,11,0.3)' : 'background:#f8fafc;border:2px solid #e2e8f0'}">
-        <div class="text-2xl">${isEarned ? b.icon : '🔒'}</div>
-        <div class="text-xs font-bold mt-1.5 leading-tight" style="color:${isEarned?'#92400E':'#94a3b8'}">${b.label}</div>
-        <div class="text-xs mt-0.5 leading-tight" style="color:${isEarned?'#B45309':'#cbd5e1'}">${subtitle}</div>
+           style="${isEarned ? 'background:linear-gradient(135deg,rgba(16,185,129,0.1),rgba(5,150,105,0.06));border:2px solid rgba(16,185,129,0.3)' : 'background:#f8fafc;border:2px solid #e2e8f0'}">
+        <div class="text-2xl">${isEarned ? b.icon : '&#x1F512;'}</div>
+        <div class="text-xs font-bold mt-1.5 leading-tight" style="color:${isEarned?'#065F46':'#94a3b8'}">${b.label}</div>
+        <div class="text-xs mt-0.5 leading-tight" style="color:${isEarned?'#047857':'#cbd5e1'}">${subtitle}</div>
       </div>
     `;
   }).join('');
@@ -1146,17 +1391,16 @@ function updateRewardsTab(profile) {
   const count = profile.disposal_count || 0;
   renderBadges(profile.badges || []);
 
-  const nextBadge = ALL_BADGES.find(b => count < b.threshold) || ALL_BADGES[ALL_BADGES.length-1];
+  const nextBadge = ALL_BADGES.find(b => b.threshold && count < b.threshold) || ALL_BADGES[ALL_BADGES.length-1];
   const prevThreshold = (() => {
     const idx = ALL_BADGES.indexOf(nextBadge);
-    return idx > 0 ? ALL_BADGES[idx-1].threshold : 0;
+    return idx > 0 && ALL_BADGES[idx-1].threshold ? ALL_BADGES[idx-1].threshold : 0;
   })();
-  const progress = Math.min(100, ((count - prevThreshold) / (nextBadge.threshold - prevThreshold)) * 100);
+  const progress = nextBadge.threshold ? Math.min(100, ((count - prevThreshold) / (nextBadge.threshold - prevThreshold)) * 100) : 100;
   document.getElementById('progress-bar').style.width = `${progress}%`;
-  document.getElementById('progress-label').textContent = `${count} / ${nextBadge.threshold} disposals`;
-  document.getElementById('next-badge-label').textContent = `${nextBadge.label} ${nextBadge.icon}`;
+  document.getElementById('progress-label').textContent = `${count} / ${nextBadge.threshold || '?'} safe returns`;
+  document.getElementById('next-badge-label').textContent = `${nextBadge.label}`;
 
-  // Ring
   const pct = Math.min(100, (profile.total_points / 500) * 100);
   const circumference = 238.76;
   document.getElementById('ring-progress').style.strokeDashoffset = circumference - (pct / 100) * circumference;
@@ -1164,32 +1408,31 @@ function updateRewardsTab(profile) {
 }
 
 async function loadLeaderboard() {
-  const list = document.getElementById('leaderboard-list');
   try {
     const r = await fetch(`${API_BASE}/rewards/leaderboard/`);
-    if (r.ok) {
-      const data = await r.json();
-      renderLeaderboard(data.leaderboard);
-      return;
-    }
+    if (r.ok) { const data = await r.json(); renderLeaderboard(data.leaderboard); return; }
   } catch (e) {}
   renderLeaderboard(getDemoLeaderboard());
 }
 
 function getDemoLeaderboard() {
   return [
-    { rank:1, anonymous_id:'7a3f****', total_points:340, region:'Delhi', disposal_count:28, badges:['first_disposal','amr_hero','safe_champion'] },
-    { rank:2, anonymous_id:'2b9c****', total_points:280, region:'Mumbai', disposal_count:22, badges:['first_disposal','amr_hero'] },
-    { rank:3, anonymous_id:'4e1d****', total_points:210, region:'Pune', disposal_count:17, badges:['first_disposal','amr_hero'] },
-    { rank:4, anonymous_id:'9f6a****', total_points:160, region:'Bengaluru', disposal_count:13, badges:['first_disposal'] },
-    { rank:5, anonymous_id:'3c8b****', total_points:120, region:'Hyderabad', disposal_count:10, badges:['first_disposal','amr_hero'] },
+    { rank:1, anonymous_id:'a7f3****', total_points:485, region:'Delhi', disposal_count:38, badges:['first_disposal','amr_hero','safe_champion'] },
+    { rank:2, anonymous_id:'d2e9****', total_points:410, region:'Bengaluru', disposal_count:32, badges:['first_disposal','amr_hero','safe_champion'] },
+    { rank:3, anonymous_id:'b5c1****', total_points:355, region:'Mumbai', disposal_count:27, badges:['first_disposal','amr_hero','safe_champion'] },
+    { rank:4, anonymous_id:'e8a4****', total_points:290, region:'Chennai', disposal_count:22, badges:['first_disposal','amr_hero'] },
+    { rank:5, anonymous_id:'c3d7****', total_points:245, region:'Pune', disposal_count:19, badges:['first_disposal','amr_hero'] },
+    { rank:6, anonymous_id:'f1b6****', total_points:210, region:'Hyderabad', disposal_count:16, badges:['first_disposal','amr_hero'] },
+    { rank:7, anonymous_id:'g9e2****', total_points:175, region:'Kolkata', disposal_count:13, badges:['first_disposal','amr_hero'] },
+    { rank:8, anonymous_id:'h4c8****', total_points:140, region:'Ahmedabad', disposal_count:11, badges:['first_disposal'] },
+    { rank:9, anonymous_id:'j6a5****', total_points:95, region:'Jaipur', disposal_count:8, badges:['first_disposal'] },
+    { rank:10, anonymous_id:'k2f9****', total_points:60, region:'Lucknow', disposal_count:5, badges:['first_disposal'] },
   ];
 }
 
 function renderLeaderboard(entries) {
   const list = document.getElementById('leaderboard-list');
-  const medalColors = ['#F59E0B','#94a3b8','#CD7F32'];
-  const medals = ['🥇','🥈','🥉'];
+  const medals = ['&#x1F947;','&#x1F948;','&#x1F949;'];
   const maxPts = entries[0]?.total_points || 1;
   list.innerHTML = entries.map(e => {
     const pct = Math.round((e.total_points / maxPts) * 100);
@@ -1198,14 +1441,14 @@ function renderLeaderboard(entries) {
         <div class="text-xl w-7 text-center flex-shrink-0">${medals[e.rank-1] || `<span style="font-size:12px;font-weight:700;color:#64748b">${e.rank}</span>`}</div>
         <div class="flex-1 min-w-0">
           <div class="text-sm font-bold" style="color:#0A0F1E">${e.anonymous_id}</div>
-          <div class="text-xs text-slate-400 mt-0.5">${e.region || '—'} · ${e.disposal_count} disposals</div>
+          <div class="text-xs text-slate-400 mt-0.5">${e.region || '\u2014'} &middot; ${e.disposal_count} safe returns</div>
           <div class="mt-1.5 h-1.5 rounded-full" style="background:#f1f5f9">
-            <div class="h-1.5 rounded-full" style="width:${pct}%;background:linear-gradient(90deg,#2563EB,#7C3AED)"></div>
+            <div class="h-1.5 rounded-full" style="width:${pct}%;background:linear-gradient(90deg,#059669,#10B981)"></div>
           </div>
         </div>
         <div class="text-right flex-shrink-0">
-          <div class="text-sm font-extrabold" style="color:#2563EB">${e.total_points}</div>
-          <div class="text-xs text-slate-400">${(e.badges||[]).length} badges</div>
+          <div class="text-sm font-extrabold" style="color:#059669">${e.total_points}</div>
+          <div class="text-xs text-slate-400">${(e.badges||[]).length} milestones</div>
         </div>
       </div>
     `;
@@ -1219,7 +1462,7 @@ function addChatMessage(text, role) {
   div.className = `flex gap-2 items-end ${role === 'user' ? 'justify-end' : ''}`;
   if (role === 'bot') {
     div.innerHTML = `
-      <div class="w-8 h-8 grad-main rounded-full flex items-center justify-center text-sm flex-shrink-0 shadow">🤖</div>
+      <div class="w-8 h-8 grad-main rounded-full flex items-center justify-center text-sm flex-shrink-0 shadow">&#x1F916;</div>
       <div class="chat-bot-msg">${text.replace(/\n/g,'<br>')}</div>`;
   } else {
     div.innerHTML = `<div class="chat-user-msg">${text}</div>`;
@@ -1234,11 +1477,9 @@ async function sendMessage() {
   if (!msg) return;
   input.value = '';
   addChatMessage(msg, 'user');
-
   try {
     const r = await fetch(`${API_BASE}/chatbot/chat/`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ message: msg })
     });
     if (r.ok) {
@@ -1257,25 +1498,23 @@ function sendSuggestion(text) {
 }
 
 function renderSuggestions(suggestions) {
-  const el = document.getElementById('chat-suggestions');
-  el.innerHTML = suggestions.map(s =>
+  document.getElementById('chat-suggestions').innerHTML = suggestions.map(s =>
     `<button onclick="sendSuggestion('${s}')" class="text-xs px-3 py-2 rounded-full font-semibold chip-blue transition-all hover:scale-[1.03]">${s}</button>`
   ).join('');
 }
 
 function getFallbackReply(msg) {
   const m = msg.toLowerCase();
-  if (m.includes('dispos')) return "To dispose antibiotics safely:\n1. Find a MedCycle pharmacy near you.\n2. Bring your medicines in original packaging.\n3. Show your QR code — earn points instantly!";
-  if (m.includes('amr') || m.includes('resistance')) return "AMR (Antimicrobial Resistance) occurs when bacteria become immune to antibiotics. It kills 1.27 million people annually. Safe disposal prevents antibiotic contamination in water and soil.";
-  if (m.includes('point') || m.includes('reward')) return "You earn 10 pts per disposal. High-risk antibiotics (fluoroquinolones) earn 3x points! Collect enough to unlock badges like 'AMR Hero' 🦸 and 'Health Guardian' 🛡️";
-  return "Hi! I can help with safe disposal, AMR awareness, and rewards. Try asking: 'How to dispose antibiotics?' or 'What is AMR?'";
+  if (m.includes('dispos')) return "To dispose medicines safely:\n1. Enter your medicine details in the Dispose tab.\n2. Generate a disposal QR code.\n3. Visit your nearest verified pharmacy return point.\n4. The pharmacist scans your QR to confirm safe collection.";
+  if (m.includes('amr') || m.includes('resistance') || m.includes('antimicrobial')) return "Antimicrobial resistance occurs when bacteria evolve to resist antibiotics. It is responsible for 1.27 million deaths annually. Improper medicine disposal, especially antibiotics, contaminates water and soil, accelerating resistance. Safe disposal through pharmacy return programs helps prevent this.";
+  if (m.includes('why') && m.includes('matter')) return "Safe medicine disposal protects water supplies from contamination, slows the spread of antimicrobial resistance, keeps communities healthier, and ensures antibiotics remain effective for future generations.";
+  return "I can help with safe disposal guidance, understanding antimicrobial resistance, and finding pharmacy return points. Try asking: 'How to dispose medicines safely?' or 'What is antimicrobial resistance?'";
 }
 
 // ── HOME GUIDE MODAL ────────────────────────────────────────────────
 function showHomeguide() {
   document.getElementById('home-guide-modal').classList.remove('hidden');
 }
-
 function closeModal() {
   document.getElementById('home-guide-modal').classList.add('hidden');
 }
@@ -1292,34 +1531,37 @@ async function loadHistory() {
         <div class="flex items-center gap-3 py-2.5 border-b last:border-0" style="border-color:#f1f5f9">
           <div class="w-9 h-9 rounded-[10px] flex items-center justify-center text-sm flex-shrink-0"
                style="background:${d.status==='verified'?'rgba(16,185,129,0.1)':'rgba(37,99,235,0.08)'}">
-            ${d.status==='verified'?'✅':'⏳'}
+            ${d.status==='verified'?'&#10004;':'&#x231B;'}
           </div>
           <div class="flex-1">
             <div class="text-sm font-semibold" style="color:#0A0F1E">${d.medicine_name}</div>
-            <div class="text-xs text-slate-400 mt-0.5">${new Date(d.created_at).toLocaleDateString()}</div>
+            <div class="text-xs text-slate-400 mt-0.5">${d.status==='verified'?'Medicine safely returned':'Pending verification'} &middot; ${new Date(d.created_at).toLocaleDateString()}</div>
           </div>
-          <div class="text-xs font-bold" style="color:#059669">+${d.points_awarded} pts</div>
+          <div class="text-xs font-bold" style="color:#059669">${d.status==='verified'?'Verified':'Pending'}</div>
         </div>
       `).join('');
     }
   } catch (e) {}
 }
 
-// ── DOSE TRACKING ────────────────────────────────────────────────────
+// ── DOSE TRACKING (NEW LOGIC: full daily cycle = 1 contribution point) ──
 let doseMeds    = JSON.parse(localStorage.getItem('medcycle_dose_meds')    || '[]');
-let doseRecords = JSON.parse(localStorage.getItem('medcycle_dose_records') || '{}'); // { "YYYY-MM-DD_medId_slot": true }
-let dosePointsTotal = parseInt(localStorage.getItem('medcycle_dose_points') || '0');
+let doseRecords = JSON.parse(localStorage.getItem('medcycle_dose_records') || '{}');
+let doseContributions = parseInt(localStorage.getItem('medcycle_dose_contributions') || '0');
+// Track which days already awarded a contribution point
+let dailyContributions = JSON.parse(localStorage.getItem('medcycle_daily_contributions') || '{}');
 
 function saveDoseData() {
   localStorage.setItem('medcycle_dose_meds',    JSON.stringify(doseMeds));
   localStorage.setItem('medcycle_dose_records',  JSON.stringify(doseRecords));
-  localStorage.setItem('medcycle_dose_points',   dosePointsTotal);
+  localStorage.setItem('medcycle_dose_contributions', doseContributions);
+  localStorage.setItem('medcycle_daily_contributions', JSON.stringify(dailyContributions));
 }
 
 function toggleDoseForm() {
   const form = document.getElementById('dose-add-form');
   form.classList.toggle('hidden');
-  document.getElementById('dose-form-toggle').textContent = form.classList.contains('hidden') ? '+ Add' : '✕ Close';
+  document.getElementById('dose-form-toggle').textContent = form.classList.contains('hidden') ? '+ Add' : 'Close';
 }
 
 function addDoseMedication() {
@@ -1328,7 +1570,7 @@ function addDoseMedication() {
   const days = parseInt(document.getElementById('dose-days').value) || 7;
   if (!name) { alert('Please enter the medicine name.'); return; }
   const startDate = new Date().toISOString().split('T')[0];
-  const endDate   = (() => { const d = new Date(); d.setDate(d.getDate() + days - 1); return d.toISOString().split('T')[0]; })();
+  const endDate = (() => { const d = new Date(); d.setDate(d.getDate() + days - 1); return d.toISOString().split('T')[0]; })();
   doseMeds.unshift({ id: Date.now(), name, freq, days, startDate, endDate, completed: false });
   saveDoseData();
   document.getElementById('dose-med-name').value = '';
@@ -1339,36 +1581,58 @@ function addDoseMedication() {
 
 function markDoseTaken(medId, slot) {
   const today = new Date().toISOString().split('T')[0];
-  const key   = `${today}_${medId}_${slot}`;
-  if (doseRecords[key]) return; // already taken
+  const key = `${today}_${medId}_${slot}`;
+  if (doseRecords[key]) return;
   doseRecords[key] = new Date().toISOString();
-  dosePointsTotal += 1;
-  // Award points to citizen
-  if (typeof updateStatsDisplay === 'function') {
-    const cur = parseInt(document.getElementById('stat-points').textContent) || 0;
-    updateStatsDisplay(
-      parseInt(document.getElementById('stat-disposals').textContent) || 0,
-      cur + 1,
-      parseInt(document.getElementById('stat-badges').textContent)   || 0
-    );
-  }
   saveDoseData();
+
+  // Check if ALL doses for ALL active meds today are now complete
+  checkDailyCompletion(today);
+
   renderDoseTab();
   updateImpactMetrics();
 }
 
+function checkDailyCompletion(today) {
+  if (dailyContributions[today]) return; // already awarded today
+
+  const activeMeds = doseMeds.filter(m => !m.completed && m.endDate >= today && m.startDate <= today);
+  if (!activeMeds.length) return;
+
+  let allComplete = true;
+  for (const med of activeMeds) {
+    for (let s = 1; s <= med.freq; s++) {
+      if (!doseRecords[`${today}_${med.id}_${s}`]) {
+        allComplete = false;
+        break;
+      }
+    }
+    if (!allComplete) break;
+  }
+
+  if (allComplete) {
+    doseContributions += 1;
+    dailyContributions[today] = true;
+    saveDoseData();
+  }
+}
+
 function markCourseComplete(medId) {
-  doseMeds = doseMeds.map(m => m.id === medId ? { ...m, completed: true } : m);
-  saveDoseData();
+  const med = doseMeds.find(m => m.id === medId);
+  if (med && !med.completed) {
+    med.completed = true;
+    // Award milestone contribution for completing full course
+    doseContributions += 5;
+    saveDoseData();
+  }
   renderDoseTab();
   updateImpactMetrics();
 }
 
 function getDoseStats() {
   const today = new Date().toISOString().split('T')[0];
-  const totalDoses  = Object.keys(doseRecords).filter(k => k.startsWith(today)).length;
+  const totalDoses = Object.keys(doseRecords).filter(k => k.startsWith(today)).length;
   const completedCourses = doseMeds.filter(m => m.completed).length;
-  // Simple streak: count consecutive days with at least one dose
   let streak = 0;
   const d = new Date();
   while (true) {
@@ -1384,16 +1648,15 @@ function getDoseStats() {
 }
 
 function renderDoseTab() {
-  const today     = new Date().toISOString().split('T')[0];
+  const today = new Date().toISOString().split('T')[0];
   const todayDate = new Date().toLocaleDateString('en-IN', { weekday:'long', month:'long', day:'numeric' });
   const el = document.getElementById('today-dose-date');
   if (el) el.textContent = todayDate;
 
-  // Detect missed doses (yesterday's unchecked doses for active meds)
+  // Missed doses
   const yesterday = (() => { const d = new Date(); d.setDate(d.getDate()-1); return d.toISOString().split('T')[0]; })();
   const missedMeds = doseMeds.filter(m => {
-    if (m.completed || m.endDate < yesterday) return false;
-    if (m.startDate > yesterday) return false;
+    if (m.completed || m.endDate < yesterday || m.startDate > yesterday) return false;
     for (let s = 1; s <= m.freq; s++) {
       if (!doseRecords[`${yesterday}_${m.id}_${s}`]) return true;
     }
@@ -1403,7 +1666,7 @@ function renderDoseTab() {
   if (missedMeds.length) {
     alertEl.classList.remove('hidden');
     document.getElementById('missed-dose-text').textContent =
-      `You missed doses yesterday for: ${missedMeds.map(m => m.name).join(', ')}. Take your doses on time to maintain your streak!`;
+      `You missed doses yesterday for: ${missedMeds.map(m => m.name).join(', ')}. Complete all daily doses to earn contribution points.`;
   } else {
     alertEl.classList.add('hidden');
   }
@@ -1414,32 +1677,32 @@ function renderDoseTab() {
   let doneCt = 0, totalCt = 0;
 
   if (!activeMeds.length) {
-    listEl.innerHTML = `<div class="text-center py-8 text-slate-400"><div class="text-3xl mb-2">💊</div><div class="text-sm font-medium">No active medications</div><div class="text-xs mt-1">Add a medication above to start tracking</div></div>`;
+    listEl.innerHTML = `<div class="text-center py-8 text-slate-400"><div class="text-3xl mb-2">&#x1F48A;</div><div class="text-sm font-medium">No active medications</div><div class="text-xs mt-1">Add a medication above to start tracking</div></div>`;
   } else {
     listEl.innerHTML = activeMeds.map(med => {
       let slots = '';
       for (let s = 1; s <= med.freq; s++) {
-        const key   = `${today}_${med.id}_${s}`;
+        const key = `${today}_${med.id}_${s}`;
         const taken = !!doseRecords[key];
         if (taken) doneCt++; totalCt++;
         const slotLabel = med.freq === 1 ? 'Once today' : med.freq === 2 ? (s===1?'Morning':'Evening') : med.freq === 3 ? (['Morning','Afternoon','Night'][s-1]) : `Dose ${s}`;
         slots += `
           <div class="flex items-center justify-between py-2 border-b last:border-0" style="border-color:#f1f5f9">
             <div class="flex items-center gap-2">
-              <span class="text-sm">${taken ? '✅' : '⭕'}</span>
+              <span class="text-sm">${taken ? '&#10004;' : '&#x2B55;'}</span>
               <span class="text-xs font-semibold" style="color:${taken?'#059669':'#475569'}">${slotLabel}</span>
             </div>
             ${taken
-              ? `<span class="text-xs px-2 py-0.5 rounded-full font-bold" style="background:rgba(5,150,105,0.10);color:#059669">+1 pt ✓</span>`
+              ? `<span class="text-xs px-2 py-0.5 rounded-full font-bold" style="background:rgba(5,150,105,0.10);color:#059669">Done</span>`
               : `<button onclick="markDoseTaken(${med.id},${s})"
                   class="text-xs px-3 py-1 rounded-[10px] font-semibold transition-all hover:scale-[1.03]"
-                  style="background:linear-gradient(135deg,#2563EB,#7C3AED);color:white;border:none;cursor:pointer">
-                  Take +1pt
+                  style="background:linear-gradient(135deg,#059669,#10B981);color:white;border:none;cursor:pointer">
+                  Mark Taken
                 </button>`}
           </div>`;
       }
-      const end   = new Date(med.endDate); end.setHours(0,0,0,0);
-      const now   = new Date(); now.setHours(0,0,0,0);
+      const end = new Date(med.endDate); end.setHours(0,0,0,0);
+      const now = new Date(); now.setHours(0,0,0,0);
       const dLeft = Math.ceil((end - now) / (1000*60*60*24));
       return `
         <div class="mb-4 last:mb-0 p-3 rounded-[14px]" style="background:rgba(37,99,235,0.04);border:1.5px solid rgba(37,99,235,0.12)">
@@ -1448,39 +1711,45 @@ function renderDoseTab() {
             <span class="text-xs font-bold px-2 py-0.5 rounded-full" style="background:rgba(37,99,235,0.08);color:#2563EB">${dLeft}d left</span>
           </div>
           ${slots}
-          ${dLeft <= 1 ? `<button onclick="markCourseComplete(${med.id})" class="mt-2 w-full text-xs py-1.5 rounded-[10px] font-semibold transition-all" style="background:linear-gradient(135deg,rgba(16,185,129,0.12),rgba(5,150,105,0.08));border:1px solid rgba(5,150,105,0.25);color:#059669">🏆 Mark Course Complete</button>` : ''}
+          ${dLeft <= 1 ? `<button onclick="markCourseComplete(${med.id})" class="mt-2 w-full text-xs py-1.5 rounded-[10px] font-semibold transition-all" style="background:linear-gradient(135deg,rgba(16,185,129,0.12),rgba(5,150,105,0.08));border:1px solid rgba(5,150,105,0.25);color:#059669">Mark Course Complete (+5 Contribution)</button>` : ''}
         </div>`;
     }).join('');
   }
 
-  document.getElementById('doses-done-count').textContent  = doneCt;
+  // Show daily completion banner
+  const dailyBanner = document.getElementById('daily-complete-banner');
+  if (dailyContributions[today]) {
+    dailyBanner.classList.remove('hidden');
+  } else {
+    dailyBanner.classList.add('hidden');
+  }
+
+  document.getElementById('doses-done-count').textContent = doneCt;
   document.getElementById('doses-total-count').textContent = totalCt;
 
-  // Stats bar
   const stats = getDoseStats();
-  document.getElementById('dose-streak').textContent         = stats.streak;
-  document.getElementById('dose-points-earned').textContent  = dosePointsTotal;
+  document.getElementById('dose-streak').textContent = stats.streak;
+  document.getElementById('dose-points-earned').textContent = doseContributions;
   const pct = totalCt > 0 ? Math.round((doneCt / totalCt) * 100) : 0;
   document.getElementById('dose-completion-pct').textContent = `${pct}%`;
 
-  // Active courses list
+  // Active courses
   const coursesEl = document.getElementById('active-courses-list');
   const allActive = doseMeds.filter(m => !m.completed);
   if (!allActive.length) {
     coursesEl.innerHTML = `<div class="text-center py-6 text-slate-400 text-xs">No active medications</div>`;
   } else {
     coursesEl.innerHTML = allActive.map(m => {
-      const end   = new Date(m.endDate); end.setHours(0,0,0,0);
-      const now   = new Date(); now.setHours(0,0,0,0);
+      const end = new Date(m.endDate); end.setHours(0,0,0,0);
+      const now = new Date(); now.setHours(0,0,0,0);
       const dLeft = Math.ceil((end - now) / (1000*60*60*24));
-      // Count today's doses taken
       const takenToday = Array.from({length: m.freq}, (_,i) => doseRecords[`${today}_${m.id}_${i+1}`]).filter(Boolean).length;
       return `
         <div class="flex items-center gap-3 py-2.5 border-b last:border-0" style="border-color:#f1f5f9">
-          <div class="w-9 h-9 rounded-[10px] flex items-center justify-center text-sm flex-shrink-0" style="background:rgba(37,99,235,0.08)">💊</div>
+          <div class="w-9 h-9 rounded-[10px] flex items-center justify-center text-sm flex-shrink-0" style="background:rgba(37,99,235,0.08)">&#x1F48A;</div>
           <div class="flex-1 min-w-0">
             <div class="text-sm font-bold truncate" style="color:#0A0F1E">${m.name}</div>
-            <div class="text-xs text-slate-400 mt-0.5">${m.freq}× daily · ${dLeft > 0 ? dLeft + 'd left' : 'ends today'}</div>
+            <div class="text-xs text-slate-400 mt-0.5">${m.freq}x daily &middot; ${dLeft > 0 ? dLeft + 'd left' : 'ends today'}</div>
           </div>
           <div class="text-right flex-shrink-0">
             <div class="text-xs font-bold" style="color:${takenToday===m.freq?'#059669':'#F59E0B'}">${takenToday}/${m.freq} today</div>
@@ -1494,7 +1763,6 @@ function renderDoseTab() {
 function updateImpactMetrics() {
   const stats = getDoseStats();
   const disposalCount = parseInt(document.getElementById('stat-disposals').textContent) || 0;
-  // Each disposal = ~3 people protected; each completed course = ~5 people
   const peopleHelped = (disposalCount * 3) + (stats.completedCourses * 5);
   const el1 = document.getElementById('impact-people-count');
   const el2 = document.getElementById('impact-courses-completed');
@@ -1504,21 +1772,120 @@ function updateImpactMetrics() {
   if (el3) el3.textContent = Object.keys(doseRecords).length;
 }
 
+// ── DEMO DATA SEEDER ─────────────────────────────────────────────────
+function seedDemoData() {
+  // 20 realistic disposal entries
+  const demoDisposals = [
+    { medicine_name: 'Amoxicillin 500mg', category: 'antibiotic', status: 'verified', created_at: '2026-05-19T09:15:00', pharmacy: 'Apollo Pharmacy, Delhi' },
+    { medicine_name: 'Azithromycin 250mg', category: 'antibiotic', status: 'verified', created_at: '2026-05-18T14:30:00', pharmacy: 'MedPlus Health, Mumbai' },
+    { medicine_name: 'Paracetamol 650mg', category: 'pain_relief', status: 'verified', created_at: '2026-05-18T11:20:00', pharmacy: 'Apollo Pharmacy, Delhi' },
+    { medicine_name: 'Ciprofloxacin 500mg', category: 'antibiotic', status: 'verified', created_at: '2026-05-17T16:45:00', pharmacy: 'City Care Pharmacy, Bengaluru' },
+    { medicine_name: 'Metformin 500mg', category: 'diabetic', status: 'verified', created_at: '2026-05-17T10:00:00', pharmacy: 'Wellness Forever, Pune' },
+    { medicine_name: 'Cephalexin 500mg', category: 'antibiotic', status: 'verified', created_at: '2026-05-16T13:10:00', pharmacy: 'Suraksha Medical, Chennai' },
+    { medicine_name: 'Ibuprofen 400mg', category: 'pain_relief', status: 'verified', created_at: '2026-05-16T09:30:00', pharmacy: 'Apollo Pharmacy, Delhi' },
+    { medicine_name: 'Cetirizine 10mg', category: 'cold_flu', status: 'verified', created_at: '2026-05-15T15:00:00', pharmacy: 'MedPlus Health, Mumbai' },
+    { medicine_name: 'Doxycycline 100mg', category: 'antibiotic', status: 'verified', created_at: '2026-05-15T08:45:00', pharmacy: 'Hetero Pharmacy, Hyderabad' },
+    { medicine_name: 'Atorvastatin 20mg', category: 'cardiac', status: 'verified', created_at: '2026-05-14T17:20:00', pharmacy: 'HealthMart Plus, Ahmedabad' },
+    { medicine_name: 'Vitamin D3 60000IU', category: 'supplements', status: 'verified', created_at: '2026-05-14T12:00:00', pharmacy: 'Frank Ross Pharmacy, Kolkata' },
+    { medicine_name: 'Levofloxacin 500mg', category: 'antibiotic', status: 'verified', created_at: '2026-05-13T14:30:00', pharmacy: 'City Care Pharmacy, Bengaluru' },
+    { medicine_name: 'Amlodipine 5mg', category: 'cardiac', status: 'verified', created_at: '2026-05-13T10:15:00', pharmacy: 'Apollo Pharmacy, Delhi' },
+    { medicine_name: 'Omeprazole 20mg', category: 'others', status: 'pending', created_at: '2026-05-12T16:00:00', pharmacy: '' },
+    { medicine_name: 'Multivitamin Tablets', category: 'supplements', status: 'verified', created_at: '2026-05-12T09:00:00', pharmacy: 'MedPlus Health, Mumbai' },
+    { medicine_name: 'Erythromycin 500mg', category: 'antibiotic', status: 'verified', created_at: '2026-05-11T13:45:00', pharmacy: 'Wellness Forever, Pune' },
+    { medicine_name: 'Cough Syrup 100ml', category: 'cold_flu', status: 'verified', created_at: '2026-05-11T08:20:00', pharmacy: 'Suraksha Medical, Chennai' },
+    { medicine_name: 'Metoprolol 50mg', category: 'cardiac', status: 'pending', created_at: '2026-05-10T15:30:00', pharmacy: '' },
+    { medicine_name: 'Amoxicillin+Clav 625mg', category: 'antibiotic', status: 'verified', created_at: '2026-05-10T11:00:00', pharmacy: 'Hetero Pharmacy, Hyderabad' },
+    { medicine_name: 'Calcium+D3 Tablets', category: 'supplements', status: 'verified', created_at: '2026-05-09T10:30:00', pharmacy: 'Apollo Pharmacy, Delhi' },
+  ];
+
+  const totalDisposals = demoDisposals.length;
+  const verifiedCount = demoDisposals.filter(d => d.status === 'verified').length;
+  const antibioticCount = demoDisposals.filter(d => d.category === 'antibiotic').length;
+  const totalPoints = verifiedCount * 12 + antibioticCount * 5;
+
+  // Update homepage stats
+  updateStatsDisplay(totalDisposals, totalPoints, 4);
+
+  // Render recent activity with all 20 entries (show latest 8)
+  const el = document.getElementById('recent-disposals');
+  el.innerHTML = demoDisposals.slice(0, 8).map(d => {
+    const isVerified = d.status === 'verified';
+    const date = new Date(d.created_at);
+    const timeStr = date.toLocaleDateString('en-IN', { day:'numeric', month:'short' }) + ', ' + date.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
+    return `
+      <div class="flex items-center gap-3 py-2.5 border-b last:border-0" style="border-color:#f1f5f9">
+        <div class="w-9 h-9 rounded-[10px] flex items-center justify-center text-sm flex-shrink-0"
+             style="background:${isVerified ? 'rgba(16,185,129,0.1)' : 'rgba(245,158,11,0.1)'}">
+          ${isVerified ? '&#10004;' : '&#x231B;'}
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="text-sm font-semibold truncate" style="color:#0A0F1E">${d.medicine_name}</div>
+          <div class="text-xs text-slate-400 mt-0.5 truncate">${isVerified ? d.pharmacy : 'Pending verification'} &middot; ${timeStr}</div>
+        </div>
+        <div class="flex-shrink-0">
+          <span class="text-[10px] font-bold px-2 py-0.5 rounded-full" style="background:${isVerified ? 'rgba(16,185,129,0.1);color:#059669' : 'rgba(245,158,11,0.1);color:#D97706'}">${isVerified ? 'Verified' : 'Pending'}</span>
+        </div>
+      </div>`;
+  }).join('');
+
+  // Seed dose tracking data (3 active medications)
+  if (!doseMeds.length) {
+    const today = new Date();
+    const d1 = new Date(); d1.setDate(d1.getDate() + 4);
+    const d2 = new Date(); d2.setDate(d2.getDate() + 2);
+    const d3 = new Date(); d3.setDate(d3.getDate() + 6);
+    const startD = new Date(); startD.setDate(startD.getDate() - 3);
+
+    doseMeds = [
+      { id: 1001, name: 'Amoxicillin 500mg', freq: 3, days: 7, startDate: startD.toISOString().split('T')[0], endDate: d1.toISOString().split('T')[0], completed: false },
+      { id: 1002, name: 'Azithromycin 250mg', freq: 1, days: 5, startDate: startD.toISOString().split('T')[0], endDate: d2.toISOString().split('T')[0], completed: false },
+      { id: 1003, name: 'Metformin 500mg', freq: 2, days: 10, startDate: startD.toISOString().split('T')[0], endDate: d3.toISOString().split('T')[0], completed: false },
+    ];
+
+    // Mark some past doses as taken
+    for (let dayOffset = -3; dayOffset < 0; dayOffset++) {
+      const dt = new Date(); dt.setDate(dt.getDate() + dayOffset);
+      const dateStr = dt.toISOString().split('T')[0];
+      // Amoxicillin - all 3 doses taken each past day
+      for (let s = 1; s <= 3; s++) doseRecords[`${dateStr}_1001_${s}`] = new Date().toISOString();
+      // Azithromycin - 1 dose taken each day
+      doseRecords[`${dateStr}_1002_1`] = new Date().toISOString();
+      // Metformin - both doses taken
+      for (let s = 1; s <= 2; s++) doseRecords[`${dateStr}_1003_${s}`] = new Date().toISOString();
+      // Award daily contribution
+      dailyContributions[dateStr] = true;
+    }
+
+    // Today: mark morning dose of Amoxicillin as taken
+    const todayStr = today.toISOString().split('T')[0];
+    doseRecords[`${todayStr}_1001_1`] = new Date().toISOString();
+    doseRecords[`${todayStr}_1003_1`] = new Date().toISOString();
+
+    // Add 2 completed courses
+    const pastStart = new Date(); pastStart.setDate(pastStart.getDate() - 12);
+    const pastEnd = new Date(); pastEnd.setDate(pastEnd.getDate() - 5);
+    doseMeds.push(
+      { id: 1004, name: 'Cephalexin 500mg', freq: 3, days: 7, startDate: pastStart.toISOString().split('T')[0], endDate: pastEnd.toISOString().split('T')[0], completed: true },
+      { id: 1005, name: 'Doxycycline 100mg', freq: 2, days: 5, startDate: pastStart.toISOString().split('T')[0], endDate: pastEnd.toISOString().split('T')[0], completed: true },
+    );
+
+    doseContributions = 13;
+    saveDoseData();
+  }
+
+  // Update impact metrics
+  updateImpactMetrics();
+}
+
 // ── INIT ─────────────────────────────────────────────────────────────
 initCitizen();
+// Seed demo data after a brief delay to let profile load
+setTimeout(seedDemoData, 500);
 
-// Re-render dynamic content when language changes
 document.addEventListener('langchange', () => {
-  // Update chat greeting
   const greet = document.getElementById('chat-greeting-msg');
   if (greet) greet.innerHTML = t('chat_greeting').replace(/\n/g, '<br>');
-  // Re-render pharmacy list with new language
   if (allPharmacies.length) renderPharmacies(allPharmacies);
-  // Update leaderboard loading placeholder
-  const lb = document.getElementById('leaderboard-list');
-  if (lb && lb.querySelector('[data-i18n]')) {
-    lb.querySelector('[data-i18n]').textContent = t('rew_lb_loading');
-  }
 });
 </script>
 <script src="/static/js/i18n.js"></script>

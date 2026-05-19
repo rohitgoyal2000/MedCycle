@@ -1,0 +1,43 @@
+{
+  "@@locale": "hi",
+  "appName": "मेडसाइकल",
+  "tagline": "स्मार्ट AMR निपटान",
+  "navHome": "होम",
+  "navDispose": "निपटान",
+  "navMap": "मानचित्र",
+  "navRewards": "पुरस्कार",
+  "navChat": "मेडबॉट",
+  "homeGreeting": "नमस्ते",
+  "homeSubtitle": "सुरक्षित निपटान करें, पुरस्कार पाएं",
+  "disposeTitle": "दवाई निपटान",
+  "mapTitle": "फार्मेसी खोजें",
+  "rewardsTitle": "मेरे पुरस्कार",
+  "chatTitle": "मेडबॉट",
+  "chatPlaceholder": "दवाई निपटान के बारे में पूछें...",
+  "chatGreeting": "नमस्ते! मैं मेडबॉट हूं, सुरक्षित एंटीबायोटिक निपटान के लिए आपका AI सहायक।",
+  "medicineName": "दवाई का नाम",
+  "quantity": "मात्रा",
+  "expiryDate": "समाप्ति तिथि",
+  "amrRiskLevel": "AMR जोखिम स्तर",
+  "generateQr": "QR कोड जनरेट करें",
+  "qrReady": "आपका QR कोड तैयार है",
+  "qrInstruction": "इस QR को नजदीकी फार्मेसी पर दिखाएं",
+  "locateMe": "मेरी लोकेशन",
+  "totalPoints": "कुल अंक",
+  "totalDisposals": "निपटान",
+  "badges": "बैज",
+  "leaderboard": "लीडरबोर्ड",
+  "homeDisposalGuide": "घर से निपटान गाइड",
+  "whyThisMatters": "यह क्यों जरूरी है",
+  "startDisposal": "निपटान शुरू करें",
+  "sendMessage": "भेजें",
+  "loading": "लोड हो रहा है...",
+  "kmAway": "{distance} किमी दूर",
+  "@kmAway": {
+    "placeholders": {
+      "distance": {
+        "type": "String"
+      }
+    }
+  }
+}

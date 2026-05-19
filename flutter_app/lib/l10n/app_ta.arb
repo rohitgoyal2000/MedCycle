@@ -1,0 +1,43 @@
+{
+  "@@locale": "ta",
+  "appName": "மெட்சைக்கிள்",
+  "tagline": "ஸ்மார்ட் AMR அகற்றல்",
+  "navHome": "முகப்பு",
+  "navDispose": "அகற்றல்",
+  "navMap": "வரைபடம்",
+  "navRewards": "பரிசுகள்",
+  "navChat": "மெட்பாட்",
+  "homeGreeting": "வணக்கம்",
+  "homeSubtitle": "பாதுகாப்பாக அகற்றுங்கள், பரிசுகள் பெறுங்கள்",
+  "disposeTitle": "மருந்து அகற்றல்",
+  "mapTitle": "மருந்தகம் தேடவும்",
+  "rewardsTitle": "என் பரிசுகள்",
+  "chatTitle": "மெட்பாட்",
+  "chatPlaceholder": "மருந்து அகற்றல் பற்றி கேளுங்கள்...",
+  "chatGreeting": "வணக்கம்! நான் மெட்பாட், பாதுகாப்பான நுண்ணுயிர் எதிர்ப்பி அகற்றலுக்கான உங்கள் AI உதவியாளர்.",
+  "medicineName": "மருந்தின் பெயர்",
+  "quantity": "அளவு",
+  "expiryDate": "காலாவதி தேதி",
+  "amrRiskLevel": "AMR அபாய நிலை",
+  "generateQr": "QR குறியீடு உருவாக்கவும்",
+  "qrReady": "உங்கள் QR குறியீடு தயார்",
+  "qrInstruction": "இந்த QR-ஐ அருகிலுள்ள மருந்தகத்தில் காட்டவும்",
+  "locateMe": "என் இருப்பிடம்",
+  "totalPoints": "மொத்த புள்ளிகள்",
+  "totalDisposals": "அகற்றல்கள்",
+  "badges": "பதக்கங்கள்",
+  "leaderboard": "தரவரிசை",
+  "homeDisposalGuide": "வீட்டிலிருந்து அகற்றல் வழிகாட்டி",
+  "whyThisMatters": "ஏன் இது முக்கியம்",
+  "startDisposal": "அகற்றலை தொடங்குங்கள்",
+  "sendMessage": "அனுப்பவும்",
+  "loading": "ஏற்றுகிறது...",
+  "kmAway": "{distance} கி.மீ தொலைவு",
+  "@kmAway": {
+    "placeholders": {
+      "distance": {
+        "type": "String"
+      }
+    }
+  }
+}

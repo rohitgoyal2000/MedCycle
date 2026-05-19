@@ -1,0 +1,43 @@
+{
+  "@@locale": "en",
+  "appName": "MedCycle",
+  "tagline": "Smart AMR Disposal",
+  "navHome": "Home",
+  "navDispose": "Dispose",
+  "navMap": "Map",
+  "navRewards": "Rewards",
+  "navChat": "MedBot",
+  "homeGreeting": "Good Morning",
+  "homeSubtitle": "Dispose safely, earn rewards",
+  "disposeTitle": "Dispose Medicine",
+  "mapTitle": "Find Pharmacy",
+  "rewardsTitle": "My Rewards",
+  "chatTitle": "MedBot",
+  "chatPlaceholder": "Ask about medicine disposal...",
+  "chatGreeting": "Hello! I'm MedBot, your AI assistant for safe antibiotic disposal.",
+  "medicineName": "Medicine Name",
+  "quantity": "Quantity",
+  "expiryDate": "Expiry Date",
+  "amrRiskLevel": "AMR Risk Level",
+  "generateQr": "Generate QR Code",
+  "qrReady": "Your QR Code is Ready",
+  "qrInstruction": "Show this QR at your nearest pharmacy",
+  "locateMe": "Locate Me",
+  "totalPoints": "Total Points",
+  "totalDisposals": "Disposals",
+  "badges": "Badges",
+  "leaderboard": "Leaderboard",
+  "homeDisposalGuide": "Home Disposal Guide",
+  "whyThisMatters": "Why This Matters",
+  "startDisposal": "Start Disposal",
+  "sendMessage": "Send",
+  "loading": "Loading...",
+  "kmAway": "{distance} km away",
+  "@kmAway": {
+    "placeholders": {
+      "distance": {
+        "type": "String"
+      }
+    }
+  }
+}
